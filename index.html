@@ -251,6 +251,7 @@
     <div class="nav-item" data-page="timer"><span class="nav-icon">⏱️</span><span class="nav-label">Czas pracy</span></div>
     <div class="nav-item" data-page="quotes"><span class="nav-icon">📋</span><span class="nav-label">Oferty</span></div>
     <div class="nav-item" data-page="calculator"><span class="nav-icon">🧮</span><span class="nav-label">Kalkulator</span></div>
+    <div class="nav-item" data-page="notes"><span class="nav-icon">📝</span><span class="nav-label">Notatki</span></div>
     <div class="nav-section">Inne</div>
     <div class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span class="nav-label">Ustawienia</span></div>
   </nav>
@@ -330,9 +331,30 @@
           <option value="Ukończony">Ukończony</option>
           <option value="Anulowany">Anulowany</option>
         </select>
+        <div style="display:flex;gap:4px;background:var(--bg3);border-radius:8px;padding:3px">
+          <button id="view-kanban-btn" class="btn btn-primary btn-sm" onclick="setProjectView('kanban')">⬛ Kanban</button>
+          <button id="view-list-btn" class="btn btn-ghost btn-sm" onclick="setProjectView('list')">☰ Lista</button>
+        </div>
         <button class="btn btn-primary" onclick="openModal('projectModal')">+ Nowy projekt</button>
       </div>
-      <div class="kanban" id="projects-kanban"></div>
+      <div id="projects-kanban"></div>
+      <div class="panel" id="projects-list-wrap" style="display:none">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th onclick="sortProjects('name')" style="cursor:pointer">Nazwa ↕</th>
+              <th>Klient</th>
+              <th onclick="sortProjects('category')" style="cursor:pointer">Kategoria ↕</th>
+              <th onclick="sortProjects('status')" style="cursor:pointer">Status ↕</th>
+              <th>Postęp</th>
+              <th onclick="sortProjects('deadline')" style="cursor:pointer">Termin ↕</th>
+              <th onclick="sortProjects('value')" style="cursor:pointer">Wartość ↕</th>
+              <th>Akcje</th>
+            </tr></thead>
+            <tbody id="projects-list-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- ═══ INVOICES ═══ -->
@@ -416,6 +438,15 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ═══ NOTES ═══ -->
+    <div class="page" id="page-notes">
+      <div class="action-row">
+        <input class="search-bar" placeholder="🔍  Szukaj notatki..." id="note-search" oninput="filterNotes()">
+        <button class="btn btn-primary" onclick="openModal('noteModal')">+ Nowa notatka</button>
+      </div>
+      <div id="notes-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"></div>
     </div>
 
     <!-- ═══ TIMER ═══ -->
@@ -734,6 +765,34 @@
   </div>
 </div>
 
+<!-- NOTE MODAL -->
+<div class="overlay" id="noteModal" style="display:none" onclick="if(event.target===this)closeModal('noteModal')">
+  <div class="modal">
+    <h2 id="noteModal-title">Nowa notatka</h2>
+    <input type="hidden" id="note-id">
+    <div class="form-group"><label>Tytuł</label><input id="n-title" placeholder="Temat notatki"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Klient (opcjonalnie)</label><select id="n-client"><option value="">– Ogólna –</option></select></div>
+      <div class="form-group"><label>Projekt (opcjonalnie)</label><select id="n-project"><option value="">– Bez projektu –</option></select></div>
+    </div>
+    <div class="form-group"><label>Kolor</label>
+      <div style="display:flex;gap:8px;margin-top:4px" id="note-colors">
+        <div class="note-color-btn" data-color="#1e2235" style="width:24px;height:24px;border-radius:6px;background:#1e2235;border:2px solid var(--accent);cursor:pointer"></div>
+        <div class="note-color-btn" data-color="#1a2035" style="width:24px;height:24px;border-radius:6px;background:rgba(108,99,255,.2);cursor:pointer"></div>
+        <div class="note-color-btn" data-color="#1f2820" style="width:24px;height:24px;border-radius:6px;background:rgba(67,217,162,.2);cursor:pointer"></div>
+        <div class="note-color-btn" data-color="#26201a" style="width:24px;height:24px;border-radius:6px;background:rgba(255,200,87,.2);cursor:pointer"></div>
+        <div class="note-color-btn" data-color="#261a1a" style="width:24px;height:24px;border-radius:6px;background:rgba(255,92,92,.2);cursor:pointer"></div>
+      </div>
+      <input type="hidden" id="n-color" value="#1e2235">
+    </div>
+    <div class="form-group"><label>Treść</label><textarea id="n-body" style="min-height:140px" placeholder="Treść notatki..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('noteModal')">Anuluj</button>
+      <button class="btn btn-primary" onclick="saveNote()">Zapisz</button>
+    </div>
+  </div>
+</div>
+
 <!-- MANUAL TIME MODAL -->
 <div class="overlay" id="manualTimeModal" style="display:none" onclick="if(event.target===this)closeModal('manualTimeModal')">
   <div class="modal">
@@ -924,6 +983,7 @@ const pageConfigs = {
   timer:      { title:'Czas pracy',        action:'+ Dodaj czas',   modal:'manualTimeModal' },
   quotes:     { title:'Oferty',            action:'+ Nowa oferta',  modal:'quoteModal'   },
   calculator: { title:'Kalkulator wyceny', action:null },
+  notes:      { title:'Notatki',           action:'+ Nowa notatka', modal:'noteModal'    },
   settings:   { title:'Ustawienia',        action:null },
 };
 
@@ -974,6 +1034,7 @@ function renderPage(page) {
   if (page==='timer')      renderTimerPage();
   if (page==='quotes')     renderQuotes();
   if (page==='calculator') { calcUpdate(); }
+  if (page==='notes')      renderNotes();
   if (page==='settings')   loadSettings();
 }
 
@@ -1116,7 +1177,10 @@ function renderProjects() {
     </div>`;
   }).join('');
 }
-function filterProjects() { renderProjects(); }
+function filterProjects() {
+  renderProjects();
+  if (projectView==='list') renderProjectsList();
+}
 
 // ── INVOICES ──
 function renderInvoices() {
@@ -1364,9 +1428,22 @@ function openModal(id) {
   }
   if (id==='manualTimeModal') {
     if (!document.getElementById('te-date').value) document.getElementById('te-date').value = new Date().toISOString().split('T')[0];
-    // populate project select specifically (no "bez projektu" option)
     const sel = document.getElementById('te-project');
     if (sel) sel.innerHTML = projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  }
+  if (id==='noteModal') {
+    const nc = document.getElementById('n-client');
+    const np = document.getElementById('n-project');
+    if (nc) nc.innerHTML = '<option value="">– Ogólna –</option>'+clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    if (np) np.innerHTML = '<option value="">– Bez projektu –</option>'+projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    // colour picker
+    document.querySelectorAll('.note-color-btn').forEach(btn=>{
+      btn.onclick = () => {
+        document.getElementById('n-color').value = btn.dataset.color;
+        document.querySelectorAll('.note-color-btn').forEach(b=>b.style.border='2px solid transparent');
+        btn.style.border='2px solid var(--accent)';
+      };
+    });
   }
   document.getElementById(id).style.display='flex';
 }
@@ -1569,7 +1646,7 @@ function deleteTask(id) {
 // DATA IMPORT / EXPORT
 // ══════════════════════════════════════════════════════
 function exportData() {
-  const data = { clients, projects, invoices, tasks, settings, timeEntries, quotes, rates };
+  const data = { clients, projects, invoices, tasks, settings, timeEntries, quotes, rates, notes };
   const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`freelance-crm-backup-${new Date().toISOString().split('T')[0]}.json`; a.click();
@@ -1590,10 +1667,12 @@ function importData(e) {
       if (data.timeEntries) timeEntries = data.timeEntries;
       if (data.quotes)      quotes      = data.quotes;
       if (data.rates)       rates       = data.rates;
+      if (data.notes)       notes       = data.notes;
       persist();
       DB.save('timeEntries', timeEntries);
       DB.save('quotes', quotes);
       DB.save('rates', rates);
+      DB.save('notes', notes);
       renderPage(currentPage);
       toast('Dane zaimportowane pomyślnie','success');
     } catch { toast('Błąd importu pliku','error'); }
@@ -1602,10 +1681,11 @@ function importData(e) {
 }
 
 function clearData() {
-  clients=[]; projects=[]; invoices=[]; tasks=[]; settings={}; timeEntries=[]; quotes=[];
+  clients=[]; projects=[]; invoices=[]; tasks=[]; settings={}; timeEntries=[]; quotes=[]; notes=[];
   persist();
   DB.save('timeEntries', timeEntries);
   DB.save('quotes', quotes);
+  DB.save('notes', notes);
   renderPage(currentPage);
   toast('Wszystkie dane zostały usunięte');
 }
@@ -1636,6 +1716,7 @@ function toast(msg, type='') {
 // ══════════════════════════════════════════════════════
 // DATA – new stores
 // ══════════════════════════════════════════════════════
+let notes = DB.load('notes');
 let timeEntries = DB.load('timeEntries');
 let quotes      = DB.load('quotes');
 let rates       = DB.load('rates', {
@@ -1644,6 +1725,15 @@ let rates       = DB.load('rates', {
   grafika:    { hourly:100, revision:50, minHours:1 },
   marketing:  { monthly:3000, post:80, ads:500, minMonths:1 },
 });
+
+if (!notes.length) {
+  notes = [
+    { id:'n1', title:'Preferencje Wiśniewska', clientId:'c1', projectId:'p1', color:'#1a2035', body:'Klientka preferuje jasne, naturalne kolory. Ważne: zdjęcia z rodzicami oraz ujęcia detali sukni. Poprawki max 2 tygodnie po sesji.', created: dateStr(-20) },
+    { id:'n2', title:'Wskazówki Studio M', clientId:'c2', projectId:'p2', color:'#261a1a', body:'Ważne: branding musi być w kolorach navy + złoto. Film musi mieć voice-over PL + napisy ENG. Dostarczyć w 4K.', created: dateStr(-12) },
+    { id:'n3', title:'Pomysły na portfolio', clientId:'', projectId:'', color:'#1f2820', body:'Rozbudować sekcję wedding photography. Dodać before/after retusz. Case study kampanii dla BrandUp.', created: dateStr(-5) },
+  ];
+  DB.save('notes', notes);
+}
 
 // Sample time entries
 if (!timeEntries.length) {
@@ -2124,6 +2214,116 @@ function calcToQuote() {
   const type = document.getElementById('calc-type')?.value||'';
   const typeNames = {fotografia:'Sesja fotograficzna',wideo:'Produkcja wideo',grafika:'Projekt graficzny',marketing:'Kampania marketingowa'};
   document.getElementById('q-subject').value = typeNames[type]||'';
+}
+
+// ══════════════════════════════════════════════════════
+// NOTES
+// ══════════════════════════════════════════════════════
+function renderNotes() {
+  const q = (document.getElementById('note-search')?.value||'').toLowerCase();
+  const list = notes.filter(n=>!q||n.title.toLowerCase().includes(q)||n.body.toLowerCase().includes(q));
+  document.getElementById('notes-grid').innerHTML = list.sort((a,b)=>b.created.localeCompare(a.created)).map(n=>{
+    const cl = n.clientId ? clients.find(c=>c.id===n.clientId) : null;
+    const pr = n.projectId ? projects.find(p=>p.id===n.projectId) : null;
+    return `<div style="background:${n.color||'var(--card)'};border:1px solid var(--border);border-radius:12px;padding:16px;position:relative">
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px">${n.title||'Notatka'}</div>
+      ${cl||pr?`<div style="font-size:11px;color:var(--text2);margin-bottom:8px">${cl?`👤 ${cl.name}`:''}${cl&&pr?' · ':''}${pr?`🎯 ${pr.name}`:''}</div>`:''}
+      <div style="font-size:13px;color:var(--text2);white-space:pre-wrap;line-height:1.5">${n.body}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+        <div style="font-size:11px;color:var(--text2)">${fmtDate(n.created)}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="editNote('${n.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}')">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📝</div><p>Brak notatek</p></div>';
+}
+function filterNotes() { renderNotes(); }
+
+function saveNote() {
+  const id = document.getElementById('note-id').value || uid();
+  const idx = notes.findIndex(n=>n.id===id);
+  const obj = {
+    id,
+    title: document.getElementById('n-title').value||'Notatka',
+    clientId: document.getElementById('n-client').value,
+    projectId: document.getElementById('n-project').value,
+    color: document.getElementById('n-color').value,
+    body: document.getElementById('n-body').value,
+    created: idx>=0 ? notes[idx].created : new Date().toISOString().split('T')[0],
+  };
+  if (idx>=0) notes[idx]=obj; else notes.push(obj);
+  DB.save('notes', notes);
+  closeModal('noteModal');
+  renderNotes();
+  toast(idx>=0?'Notatka zaktualizowana':'Notatka dodana','success');
+}
+
+function editNote(id) {
+  const n = notes.find(n=>n.id===id); if(!n) return;
+  openModal('noteModal');
+  document.getElementById('noteModal-title').textContent='Edytuj notatkę';
+  document.getElementById('note-id').value=n.id;
+  document.getElementById('n-title').value=n.title||'';
+  document.getElementById('n-client').value=n.clientId||'';
+  document.getElementById('n-project').value=n.projectId||'';
+  document.getElementById('n-color').value=n.color||'#1e2235';
+  document.getElementById('n-body').value=n.body||'';
+}
+
+function deleteNote(id) {
+  notes=notes.filter(n=>n.id!==id); DB.save('notes',notes); renderNotes(); toast('Notatka usunięta');
+}
+
+// ══════════════════════════════════════════════════════
+// PROJECT LIST VIEW & SORTING
+// ══════════════════════════════════════════════════════
+let projectView = 'kanban';
+let projectSort = { key:'deadline', dir:1 };
+
+function setProjectView(v) {
+  projectView = v;
+  document.getElementById('projects-kanban').style.display = v==='kanban' ? '' : 'none';
+  document.getElementById('projects-list-wrap').style.display = v==='list' ? '' : 'none';
+  document.getElementById('view-kanban-btn').className = 'btn btn-sm ' + (v==='kanban'?'btn-primary':'btn-ghost');
+  document.getElementById('view-list-btn').className = 'btn btn-sm ' + (v==='list'?'btn-primary':'btn-ghost');
+  if (v==='list') renderProjectsList();
+}
+
+function sortProjects(key) {
+  if (projectSort.key===key) projectSort.dir*=-1; else { projectSort.key=key; projectSort.dir=1; }
+  renderProjectsList();
+}
+
+function renderProjectsList() {
+  const q   = (document.getElementById('project-search')?.value||'').toLowerCase();
+  const cat = document.getElementById('project-filter-cat')?.value||'';
+  const st  = document.getElementById('project-filter-status')?.value||'';
+  let list  = projects.filter(p=>(!q||p.name.toLowerCase().includes(q))&&(!cat||p.category===cat)&&(!st||p.status===st));
+  const { key, dir } = projectSort;
+  list.sort((a,b)=>{
+    const av = a[key]||''; const bv = b[key]||'';
+    return (av<bv?-1:av>bv?1:0)*dir;
+  });
+  document.getElementById('projects-list-tbody').innerHTML = list.map(p=>{
+    const cl = clients.find(c=>c.id===p.clientId)||{name:'–'};
+    const daysLeft = p.deadline ? Math.ceil((new Date(p.deadline)-new Date())/864e5) : null;
+    const dlCol = daysLeft!==null&&daysLeft<0?'var(--red)':daysLeft!==null&&daysLeft<=3?'var(--yellow)':'var(--text2)';
+    return `<tr>
+      <td style="font-weight:600">${p.name}</td>
+      <td>${cl.name}</td>
+      <td><span class="tag tag-${p.category}">${catEmoji[p.category]} ${p.category}</span></td>
+      <td><span class="tag ${p.status==='Ukończony'?'tag-done':p.status==='W trakcie'?'tag-active':'tag-new'}">${p.status}</span></td>
+      <td style="min-width:100px"><div class="progress"><div class="progress-fill" style="width:${p.progress}%;background:${catColors[p.category]}"></div></div><div style="font-size:10px;color:var(--text2);margin-top:2px">${p.progress}%</div></td>
+      <td style="color:${dlCol}">${p.deadline?fmtDate(p.deadline):'–'}${daysLeft!==null?` (${daysLeft<0?'po terminie':daysLeft+'d'})`:''}  </td>
+      <td style="font-weight:700;color:var(--green)">${p.value?fmtMoney(p.value):'–'}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-sm" onclick="editProject('${p.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProject('${p.id}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8"><div class="empty"><div class="empty-icon">🎯</div><p>Brak projektów</p></div></td></tr>';
 }
 
 // ══════════════════════════════════════════════════════
