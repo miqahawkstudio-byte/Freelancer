@@ -4,6 +4,7 @@ import type { FoodItem, AnalysisResult } from '../../types';
 import type { CompressedImage } from '../../lib/imageUtils';
 import { getSettings, saveMeal, computeTotals } from '../../lib/storage';
 import { toDateString, generateId, formatKcal, formatGrams, midpoint } from '../../lib/utils';
+import { analyzeImage } from '../../lib/visionApi';
 import ConfidenceBadge from '../ui/ConfidenceBadge';
 
 interface Props {
@@ -78,22 +79,13 @@ export default function ResultScreen({ image, onSave, onBack, onGoSettings }: Pr
     setStatus('loading');
     setErrorMsg('');
     try {
-      const res = await fetch('http://localhost:8000/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image_base64: image.base64,
-          media_type: image.mediaType,
-          api_key: settings.apiKey,
-          provider: settings.provider,
-          model: settings.model || undefined,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || `Błąd ${res.status}`);
-      }
-      const result: AnalysisResult = await res.json();
+      const result = await analyzeImage(
+        image.base64,
+        image.mediaType,
+        settings.apiKey,
+        settings.provider,
+        settings.model || '',
+      );
       if (!result.success) {
         setStatus('error');
         setErrorMsg(result.error || 'Nie rozpoznano jedzenia na zdjęciu');
