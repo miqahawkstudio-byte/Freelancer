@@ -23,7 +23,7 @@ echo "Frontend PID: $FRONTEND_PID"
 
 echo ""
 echo "================================================"
-echo " SRT Generator uruchomiony!"
+echo " CalorieVision uruchomiony!"
 echo " Otwórz:  http://localhost:5173"
 echo " API:     http://localhost:8000/docs"
 echo "================================================"
