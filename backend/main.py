@@ -1,158 +1,180 @@
-import os
+import json
+import re
 import uuid
-import asyncio
-import tempfile
-from pathlib import Path
 from typing import Optional
 
-import aiofiles
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel
 
-from srt_generator import build_srt
-
-app = FastAPI(title="SRT Generator API")
+app = FastAPI(title="CalorieVision API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:4173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:4173",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = Path(tempfile.gettempdir()) / "srt_uploads"
-OUTPUT_DIR = Path(tempfile.gettempdir()) / "srt_outputs"
-UPLOAD_DIR.mkdir(exist_ok=True)
-OUTPUT_DIR.mkdir(exist_ok=True)
+VISION_PROMPT = """Jesteś precyzyjnym asystentem dietetycznym analizującym zdjęcia posiłków.
 
-# Track job status
-jobs: dict[str, dict] = {}
+ZADANIE: Zidentyfikuj wszystkie produkty spożywcze widoczne na zdjęciu i oszacuj ich wartości odżywcze.
+
+ZASADY:
+1. Podawaj ZAKRESY (min–max) – to uczciwy szacunek, nie precyzyjny pomiar
+2. Szacuj gramaturę na podstawie: rozmiaru naczynia, standardowych porcji, proporcji na zdjęciu
+3. Uwzględnij sposób przygotowania (surowe/gotowane/smażone ma wpływ na kcal)
+4. Confidence: 0.9+ wyraźnie widoczne i pewne, 0.7–0.9 prawdopodobne, 0.5–0.7 niepewne, <0.5 zgadywanie
+
+PRZYPADKI SPECJALNE:
+- Nieczytelne/rozmazane zdjęcie → {"success": false, "error": "Zdjęcie niewyraźne – zrób wyraźniejsze"}
+- Brak jedzenia na zdjęciu → {"success": false, "error": "Nie wykryto jedzenia na zdjęciu"}
+- Zamknięte opakowanie/pojemnik → podaj jako jedną pozycję z confidence 0.2 i bardzo szerokimi zakresami
+- Danie mieszane (zupa, sałatka) → możesz podać całość jako jedną pozycję lub rozdzielić składniki
+
+Odpowiedz WYŁĄCZNIE czystym JSON (zero tekstu poza JSON, zero backticks, zero markdown):
+{
+  "success": true,
+  "items": [
+    {
+      "name": "Kurczak pieczony",
+      "description": "Pierś z kurczaka bez skóry, pieczona w piekarniku",
+      "quantity_g": {"min": 150, "max": 180},
+      "kcal": {"min": 165, "max": 198},
+      "protein_g": {"min": 31, "max": 37},
+      "carbs_g": {"min": 0, "max": 1},
+      "fat_g": {"min": 3, "max": 5},
+      "confidence": 0.85
+    }
+  ],
+  "overall_confidence": 0.8,
+  "notes": "Opcjonalny komentarz o warunkach analizy",
+  "error": null
+}"""
 
 
-def run_transcription(
-    job_id: str,
-    file_path: str,
-    language: str,
-    max_words_per_line: int,
-    max_lines_per_block: int,
-    max_chars_per_line: int,
-    max_segment_duration: float,
-    model_size: str,
-):
+class AnalyzeRequest(BaseModel):
+    image_base64: str
+    media_type: str = "image/jpeg"
+    api_key: str
+    provider: str = "claude"
+    model: Optional[str] = None
+
+
+@app.post("/api/analyze")
+async def analyze_image(req: AnalyzeRequest):
+    if not req.api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="Brak klucza API. Skonfiguruj go w Ustawieniach.",
+        )
+
     try:
-        jobs[job_id]["status"] = "transcribing"
+        if req.provider == "claude":
+            result = _analyze_claude(req)
+        elif req.provider == "openai":
+            result = await _analyze_openai(req)
+        else:
+            raise HTTPException(status_code=400, detail=f"Nieznany provider: {req.provider}")
 
-        from faster_whisper import WhisperModel
+        return _add_ids(result)
 
-        model = WhisperModel(model_size, device="cpu", compute_type="int8")
-
-        lang = None if language == "auto" else language
-        segments, info = model.transcribe(
-            file_path,
-            language=lang,
-            beam_size=5,
-            word_timestamps=False,
-        )
-
-        jobs[job_id]["status"] = "generating"
-        jobs[job_id]["detected_language"] = info.language
-
-        srt_content = build_srt(
-            list(segments),
-            max_words_per_line=max_words_per_line,
-            max_lines_per_block=max_lines_per_block,
-            max_chars_per_line=max_chars_per_line,
-            max_segment_duration=max_segment_duration,
-        )
-
-        output_path = OUTPUT_DIR / f"{job_id}.srt"
-        output_path.write_text(srt_content, encoding="utf-8")
-
-        jobs[job_id]["status"] = "done"
-        jobs[job_id]["srt_path"] = str(output_path)
-        jobs[job_id]["detected_language"] = info.language
-        jobs[job_id]["duration"] = info.duration
-
+    except HTTPException:
+        raise
     except Exception as e:
-        jobs[job_id]["status"] = "error"
-        jobs[job_id]["error"] = str(e)
-    finally:
-        try:
-            os.remove(file_path)
-        except OSError:
-            pass
+        msg = str(e)
+        if "authentication" in msg.lower() or "401" in msg or "api_key" in msg.lower():
+            raise HTTPException(status_code=401, detail="Nieprawidłowy klucz API")
+        if "rate" in msg.lower() or "429" in msg:
+            raise HTTPException(status_code=429, detail="Przekroczono limit API – poczekaj chwilę")
+        raise HTTPException(status_code=500, detail=f"Błąd analizy: {msg}")
 
 
-@app.post("/api/transcribe")
-async def transcribe(
-    background_tasks: BackgroundTasks,
-    file: UploadFile = File(...),
-    language: str = Form("auto"),
-    max_words_per_line: int = Form(7),
-    max_lines_per_block: int = Form(2),
-    max_chars_per_line: int = Form(42),
-    max_segment_duration: float = Form(5.0),
-    model_size: str = Form("small"),
-):
-    allowed_extensions = {".mp3", ".mp4", ".wav", ".m4a", ".webm", ".ogg"}
-    suffix = Path(file.filename or "").suffix.lower()
-    if suffix not in allowed_extensions:
-        raise HTTPException(status_code=400, detail=f"Unsupported file type: {suffix}")
+def _analyze_claude(req: AnalyzeRequest) -> dict:
+    import anthropic
 
-    job_id = str(uuid.uuid4())
-    upload_path = UPLOAD_DIR / f"{job_id}{suffix}"
+    client = anthropic.Anthropic(api_key=req.api_key)
+    model = req.model or "claude-sonnet-4-6"
 
-    async with aiofiles.open(upload_path, "wb") as f:
-        while chunk := await file.read(1024 * 1024):
-            await f.write(chunk)
-
-    jobs[job_id] = {"status": "queued"}
-
-    background_tasks.add_task(
-        run_transcription,
-        job_id=job_id,
-        file_path=str(upload_path),
-        language=language,
-        max_words_per_line=max_words_per_line,
-        max_lines_per_block=max_lines_per_block,
-        max_chars_per_line=max_chars_per_line,
-        max_segment_duration=max_segment_duration,
-        model_size=model_size,
+    message = client.messages.create(
+        model=model,
+        max_tokens=2048,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": req.media_type,
+                            "data": req.image_base64,
+                        },
+                    },
+                    {"type": "text", "text": VISION_PROMPT},
+                ],
+            }
+        ],
     )
 
-    return {"job_id": job_id}
+    return _parse_json(message.content[0].text)
 
 
-@app.get("/api/status/{job_id}")
-async def get_status(job_id: str):
-    job = jobs.get(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return job
+async def _analyze_openai(req: AnalyzeRequest) -> dict:
+    from openai import AsyncOpenAI
 
+    client = AsyncOpenAI(api_key=req.api_key)
+    model = req.model or "gpt-4o"
 
-@app.get("/api/download/{job_id}")
-async def download_srt(job_id: str, filename: Optional[str] = None):
-    job = jobs.get(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    if job["status"] != "done":
-        raise HTTPException(status_code=400, detail="Job not finished yet")
-
-    srt_path = Path(job["srt_path"])
-    if not srt_path.exists():
-        raise HTTPException(status_code=404, detail="SRT file not found")
-
-    dl_name = filename if filename else f"subtitles_{job_id[:8]}.srt"
-    return FileResponse(
-        path=str(srt_path),
-        media_type="text/plain; charset=utf-8",
-        filename=dl_name,
-        headers={"Content-Disposition": f'attachment; filename="{dl_name}"'},
+    response = await client.chat.completions.create(
+        model=model,
+        max_tokens=2048,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{req.media_type};base64,{req.image_base64}"
+                        },
+                    },
+                    {"type": "text", "text": VISION_PROMPT},
+                ],
+            }
+        ],
     )
+
+    return _parse_json(response.choices[0].message.content)
+
+
+def _parse_json(raw: str) -> dict:
+    clean = raw.strip()
+    # Remove markdown code fences if the model added them despite instructions
+    clean = re.sub(r"^```(?:json)?\s*", "", clean, flags=re.MULTILINE)
+    clean = re.sub(r"\s*```\s*$", "", clean, flags=re.MULTILINE)
+    clean = clean.strip()
+
+    try:
+        return json.loads(clean)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Model zwrócił nieprawidłowy JSON: {exc}") from exc
+
+
+def _add_ids(data: dict) -> dict:
+    for item in data.get("items", []):
+        if "id" not in item:
+            item["id"] = str(uuid.uuid4())
+    return data
 
 
 @app.get("/health")
-async def health():
-    return {"status": "ok"}
+def health():
+    return {"status": "ok", "service": "CalorieVision API"}
