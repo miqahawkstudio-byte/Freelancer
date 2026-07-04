@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio — czuły punkt Nowiccy | fotografia i film</title>
+  <meta name="description" content="Portfolio fotograficzne czuły punkt Nowiccy: śluby, urodziny i eventy, portrety, sesje rodzinne, zlecenia komercyjne.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===== NAWIGACJA (wspólna dla wszystkich podstron) ===== -->
+  <header class="site-header">
+    <nav class="nav container" aria-label="Nawigacja główna">
+      <a href="index.html" class="nav-brand">
+        czuły punkt
+        <span class="brand-sub">Nowiccy · foto &amp; film</span>
+      </a>
+
+      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Otwórz menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <ul class="nav-list" id="nav-menu">
+        <li><a href="index.html" class="nav-link">Start</a></li>
+        <li><a href="portfolio.html" class="nav-link" aria-current="page">Portfolio</a></li>
+        <!-- Podstrony z kolejnych etapów — po utworzeniu pliku zamień <span> na <a href="..."> -->
+        <li><span class="nav-link nav-link--soon">Wideo</span></li>
+        <li><span class="nav-link nav-link--soon">O nas</span></li>
+        <li><span class="nav-link nav-link--soon">Kontakt</span></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ===== NAGŁÓWEK PODSTRONY ===== -->
+    <section class="page-head">
+      <div class="container">
+        <p class="section-kicker reveal">nasze prace</p>
+        <h1 class="section-title reveal" data-delay="1">Portfolio</h1>
+        <!-- [PRZYKŁADOWY TEKST — do podmiany] -->
+        <p class="page-lead reveal" data-delay="2">
+          Każde zlecenie to inna historia. Wybierz kategorię albo przeglądaj wszystko.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== GALERIA Z FILTREM ===== -->
+    <section class="section gallery-section">
+      <div class="container">
+
+        <!-- Filtry: przycisk działa na karty z pasującym data-cat.
+             Aby dodać nową kategorię: dodaj przycisk z data-filter="klucz"
+             i używaj tego klucza w data-cat kart poniżej. -->
+        <div class="filter-bar reveal" role="group" aria-label="Filtr kategorii">
+          <button class="filter-btn is-active" data-filter="all">Wszystkie</button>
+          <button class="filter-btn" data-filter="sluby">Śluby</button>
+          <button class="filter-btn" data-filter="urodziny">Urodziny i eventy</button>
+          <button class="filter-btn" data-filter="portrety">Portrety</button>
+          <button class="filter-btn" data-filter="rodzinne">Rodzinne</button>
+          <button class="filter-btn" data-filter="komercyjne">Dla firm</button>
+        </div>
+
+        <!-- GALERIA.
+             Aby dodać zdjęcie: skopiuj cały blok <figure class="gallery-item">,
+             ustaw data-cat na klucz kategorii, wstaw <img> w miejsce <div class="ph">:
+               <img src="assets/img/NAZWA.jpg" alt="OPIS ZDJĘCIA" loading="lazy">
+             Lightbox pokaże pełny obraz automatycznie — nic więcej nie trzeba zmieniać.
+             Proporcje mogą być dowolne (pion/poziom) — siatka sama je ułoży. -->
+        <div class="gallery" id="galeria">
+
+          <!-- PLACEHOLDER: śluby #1 — zdjęcie, proporcje 4:5 -->
+          <figure class="gallery-item reveal" data-cat="sluby">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-4x5"><div class="ph">ŚLUBY — ZDJĘCIE 4:5</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Śluby</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: śluby #2 — zdjęcie, proporcje 3:2 -->
+          <figure class="gallery-item reveal" data-cat="sluby">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-3x2"><div class="ph">ŚLUBY — ZDJĘCIE 3:2</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Śluby</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: urodziny #1 — zdjęcie, proporcje 3:2 -->
+          <figure class="gallery-item reveal" data-cat="urodziny">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-3x2"><div class="ph">URODZINY / EVENTY — ZDJĘCIE 3:2</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Urodziny i eventy</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: urodziny #2 — zdjęcie, proporcje 4:5 -->
+          <figure class="gallery-item reveal" data-cat="urodziny">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-4x5"><div class="ph">URODZINY / EVENTY — ZDJĘCIE 4:5</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Urodziny i eventy</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: portrety #1 — zdjęcie, proporcje 4:5 -->
+          <figure class="gallery-item reveal" data-cat="portrety">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-4x5"><div class="ph">PORTRETY — ZDJĘCIE 4:5</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Portrety</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: portrety #2 — zdjęcie, proporcje 4:5 -->
+          <figure class="gallery-item reveal" data-cat="portrety">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-4x5"><div class="ph">PORTRETY — ZDJĘCIE 4:5</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Portrety</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: rodzinne #1 — zdjęcie, proporcje 3:2 -->
+          <figure class="gallery-item reveal" data-cat="rodzinne">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-3x2"><div class="ph">RODZINNE — ZDJĘCIE 3:2</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Rodzinne</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: rodzinne #2 — zdjęcie, proporcje 4:5 -->
+          <figure class="gallery-item reveal" data-cat="rodzinne">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-4x5"><div class="ph">RODZINNE — ZDJĘCIE 4:5</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Rodzinne</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: komercyjne #1 — zdjęcie, proporcje 3:2 -->
+          <figure class="gallery-item reveal" data-cat="komercyjne">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-3x2"><div class="ph">DLA FIRM — ZDJĘCIE 3:2</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Dla firm</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: komercyjne #2 — zdjęcie, proporcje 1:1 -->
+          <figure class="gallery-item reveal" data-cat="komercyjne">
+            <button class="gallery-trigger" aria-label="Powiększ zdjęcie">
+              <div class="ratio-1x1"><div class="ph">DLA FIRM — ZDJĘCIE 1:1</div></div>
+            </button>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł — do podmiany]</span>
+              <span class="work-cat">Dla firm</span>
+            </figcaption>
+          </figure>
+
+        </div>
+
+        <p class="gallery-empty" hidden>Brak zdjęć w tej kategorii — wkrótce się pojawią.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== LIGHTBOX (wspólny overlay galerii) ===== -->
+  <div class="lightbox" id="lightbox" hidden aria-modal="true" role="dialog" aria-label="Podgląd zdjęcia">
+    <button class="lightbox-close" aria-label="Zamknij podgląd">&times;</button>
+    <button class="lightbox-prev" aria-label="Poprzednie zdjęcie">&#8249;</button>
+    <div class="lightbox-stage"></div>
+    <button class="lightbox-next" aria-label="Następne zdjęcie">&#8250;</button>
+    <p class="lightbox-caption"></p>
+  </div>
+
+  <!-- ===== STOPKA (wspólna dla wszystkich podstron) ===== -->
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <p class="footer-brand">czuły punkt Nowiccy</p>
+      <ul class="footer-social">
+        <!-- PLACEHOLDER: linki social media — do podmiany w ETAPIE 5 -->
+        <li><a href="#" aria-label="Instagram">Instagram</a></li>
+        <li><a href="https://www.facebook.com/MiqaStudioo/" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a></li>
+        <li><a href="#" aria-label="YouTube">YouTube</a></li>
+      </ul>
+      <p>&copy; 2026 czuły punkt Nowiccy. Wszystkie prawa zastrzeżone.<br>
+      <span class="footer-note">Nowa odsłona <a href="https://www.facebook.com/MiqaStudioo/" target="_blank" rel="noopener">Miqa Studio</a> — ta sama pasja, nowe imię.</span></p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
