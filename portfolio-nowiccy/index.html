@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>czuły punkt Nowiccy — fotografia i film</title>
+  <meta name="description" content="czuły punkt Nowiccy — fotografia i film. Podejmujemy się każdego zlecenia foto i wideo.">
+
+  <!-- Fonty: Playfair Display (nagłówki) + Inter (tekst) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===== NAWIGACJA (wspólna dla wszystkich podstron) ===== -->
+  <header class="site-header">
+    <nav class="nav container" aria-label="Nawigacja główna">
+      <a href="index.html" class="nav-brand">
+        czuły punkt
+        <span class="brand-sub">Nowiccy · foto &amp; film</span>
+      </a>
+
+      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Otwórz menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <ul class="nav-list" id="nav-menu">
+        <li><a href="index.html" class="nav-link" aria-current="page">Start</a></li>
+        <!-- Poniższe podstrony powstaną w kolejnych etapach — na razie oznaczone jako "wkrótce".
+             Po utworzeniu pliku zamień <span> na <a href="..."> -->
+        <li><span class="nav-link nav-link--soon">Portfolio</span></li>
+        <li><span class="nav-link nav-link--soon">Wideo</span></li>
+        <li><span class="nav-link nav-link--soon">O nas</span></li>
+        <li><span class="nav-link nav-link--soon">Kontakt</span></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ===== TREŚĆ STRONY ===== -->
+  <main>
+    <!-- ETAP 0: szkielet bez treści.
+         Sekcje strony głównej (hero, wyróżnione prace, o nas, opinie)
+         zostaną dodane w ETAPIE 1. -->
+    <section class="section">
+      <div class="container">
+        <h1 class="section-title reveal">czuły punkt <span class="accent">Nowiccy</span></h1>
+        <p class="reveal" data-delay="1" style="color: var(--color-text-muted);">
+          Strona w budowie — fundament gotowy. Treść pojawi się w kolejnych etapach.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== STOPKA (wspólna dla wszystkich podstron) ===== -->
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <p class="footer-brand">czuły punkt Nowiccy</p>
+      <ul class="footer-social">
+        <!-- PLACEHOLDER: linki social media — do podmiany w ETAPIE 5 -->
+        <li><a href="#" aria-label="Instagram">Instagram</a></li>
+        <li><a href="#" aria-label="Facebook">Facebook</a></li>
+        <li><a href="#" aria-label="YouTube">YouTube</a></li>
+      </ul>
+      <p>&copy; 2026 czuły punkt Nowiccy. Wszystkie prawa zastrzeżone.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
