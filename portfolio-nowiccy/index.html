@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>czuły punkt Nowiccy — fotografia i film</title>
+  <meta name="description" content="czuły punkt Nowiccy — fotografia i film. Podejmujemy się każdego zlecenia foto i wideo.">
+
+  <!-- Fonty: Playfair Display (nagłówki) + Inter (tekst) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===== NAWIGACJA (wspólna dla wszystkich podstron) ===== -->
+  <header class="site-header">
+    <nav class="nav container" aria-label="Nawigacja główna">
+      <a href="index.html" class="nav-brand">
+        czuły punkt
+        <span class="brand-sub">Nowiccy · foto &amp; film</span>
+      </a>
+
+      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Otwórz menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <ul class="nav-list" id="nav-menu">
+        <li><a href="index.html" class="nav-link" aria-current="page">Start</a></li>
+        <!-- Poniższe podstrony powstaną w kolejnych etapach — na razie oznaczone jako "wkrótce".
+             Po utworzeniu pliku zamień <span> na <a href="..."> -->
+        <li><a href="portfolio.html" class="nav-link">Portfolio</a></li>
+        <li><span class="nav-link nav-link--soon">Wideo</span></li>
+        <li><span class="nav-link nav-link--soon">O nas</span></li>
+        <li><span class="nav-link nav-link--soon">Kontakt</span></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ===== TREŚĆ STRONY ===== -->
+  <main>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+      <!-- PLACEHOLDER: tło hero — zdjęcie lub wideo, proporcje 16:9, min. 1920px szerokości.
+           Wariant A (zdjęcie): odkomentuj <img> i podaj ścieżkę.
+           Wariant B (wideo):   odkomentuj <video> i podaj ścieżkę (mp4, bez dźwięku, krótka pętla).
+           Usuń wtedy <div class="ph hero-ph">. -->
+      <div class="hero-media">
+        <div class="ph hero-ph">ZDJĘCIE / WIDEO HERO — proporcje 16:9, min. 1920 px</div>
+        <!--
+        <img src="assets/img/hero.jpg" alt="czuły punkt Nowiccy — fotografia i film" class="hero-img">
+        -->
+        <!--
+        <video class="hero-img" autoplay muted loop playsinline poster="assets/img/hero-poster.jpg">
+          <source src="assets/video/hero.mp4" type="video/mp4">
+        </video>
+        -->
+        <div class="hero-overlay" aria-hidden="true"></div>
+      </div>
+
+      <div class="hero-content container">
+        <p class="hero-kicker reveal">fotografia &amp; film</p>
+        <h1 class="hero-title reveal" data-delay="1">czuły punkt <span class="accent">Nowiccy</span></h1>
+        <!-- [PRZYKŁADOWY TEKST — do podmiany] -->
+        <p class="hero-lead reveal" data-delay="2">
+          Podejmujemy się każdego zlecenia foto i wideo — od reportażu ślubnego,
+          przez sesje portretowe, po film dla Twojej marki.
+        </p>
+        <div class="hero-actions reveal" data-delay="3">
+          <a href="portfolio.html" class="btn btn--solid">Zobacz nasze prace</a>
+        </div>
+      </div>
+
+      <a href="#wyrozniowe-prace" class="hero-scroll" aria-label="Przewiń w dół">
+        <span class="hero-scroll-line" aria-hidden="true"></span>
+      </a>
+    </section>
+
+    <!-- ===== WYRÓŻNIONE PRACE ===== -->
+    <section class="section" id="wyrozniowe-prace">
+      <div class="container">
+        <p class="section-kicker reveal">wybrane kadry</p>
+        <h2 class="section-title reveal">Wyróżnione <span class="accent">prace</span></h2>
+
+        <!-- Siatka 6 miniatur. Aby podmienić: w karcie zastąp <div class="ph"> obrazkiem
+             <img src="assets/img/NAZWA.jpg" alt="OPIS" loading="lazy">
+             i uzupełnij podpis. Kartę można dowolnie powielać/usuwać. -->
+        <div class="works-grid">
+
+          <!-- PLACEHOLDER: praca 1 — zdjęcie, proporcje 4:5 -->
+          <figure class="work-card reveal">
+            <div class="work-media ratio-4x5">
+              <div class="ph">ZDJĘCIE — proporcje 4:5</div>
+            </div>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł pracy — do podmiany]</span>
+              <span class="work-cat">Kategoria</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: praca 2 — zdjęcie, proporcje 4:5 -->
+          <figure class="work-card reveal" data-delay="1">
+            <div class="work-media ratio-4x5">
+              <div class="ph">ZDJĘCIE — proporcje 4:5</div>
+            </div>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł pracy — do podmiany]</span>
+              <span class="work-cat">Kategoria</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: praca 3 — zdjęcie, proporcje 4:5 -->
+          <figure class="work-card reveal" data-delay="2">
+            <div class="work-media ratio-4x5">
+              <div class="ph">ZDJĘCIE — proporcje 4:5</div>
+            </div>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł pracy — do podmiany]</span>
+              <span class="work-cat">Kategoria</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: praca 4 — zdjęcie, proporcje 4:5 -->
+          <figure class="work-card reveal">
+            <div class="work-media ratio-4x5">
+              <div class="ph">ZDJĘCIE — proporcje 4:5</div>
+            </div>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł pracy — do podmiany]</span>
+              <span class="work-cat">Kategoria</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: praca 5 — zdjęcie, proporcje 4:5 -->
+          <figure class="work-card reveal" data-delay="1">
+            <div class="work-media ratio-4x5">
+              <div class="ph">ZDJĘCIE — proporcje 4:5</div>
+            </div>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł pracy — do podmiany]</span>
+              <span class="work-cat">Kategoria</span>
+            </figcaption>
+          </figure>
+
+          <!-- PLACEHOLDER: praca 6 — zdjęcie, proporcje 4:5 -->
+          <figure class="work-card reveal" data-delay="2">
+            <div class="work-media ratio-4x5">
+              <div class="ph">ZDJĘCIE — proporcje 4:5</div>
+            </div>
+            <figcaption class="work-caption">
+              <span class="work-title">[Tytuł pracy — do podmiany]</span>
+              <span class="work-cat">Kategoria</span>
+            </figcaption>
+          </figure>
+
+        </div>
+
+        <p class="works-more reveal">
+          <a href="portfolio.html" class="btn">Zobacz całe portfolio</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== SKRÓCONE O NAS ===== -->
+    <section class="section section--alt" id="o-nas-skrot">
+      <div class="container about-teaser">
+        <div class="about-teaser-media reveal">
+          <!-- PLACEHOLDER: zdjęcie pary / duetu Nowiccy, proporcje 4:5 -->
+          <div class="ratio-4x5">
+            <div class="ph">ZDJĘCIE — Nowiccy, proporcje 4:5</div>
+          </div>
+        </div>
+        <div class="about-teaser-text">
+          <p class="section-kicker reveal">kim jesteśmy</p>
+          <h2 class="section-title reveal" data-delay="1">Dwa spojrzenia, <span class="accent">jeden czuły punkt</span></h2>
+          <!-- [PRZYKŁADOWY TEKST — do podmiany] -->
+          <p class="reveal" data-delay="2">
+            Jesteśmy duetem — fotografujemy i filmujemy razem, dzięki czemu żaden
+            ważny moment nam nie umyka. Nie zamykamy się w jednej szufladzie:
+            śluby, portrety, wydarzenia, reklama — podejmujemy się każdego zlecenia,
+            bo w każdym szukamy tego samego: prawdziwych emocji.
+          </p>
+          <p class="reveal" data-delay="3">
+            Pracujemy dyskretnie, blisko ludzi. Kino, nie cyrk.
+          </p>
+          <!-- Link aktywny od ETAPU 4 (o-mnie.html) — do tego czasu ukryty
+          <a href="o-mnie.html" class="btn">Poznaj nas bliżej</a>
+          -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== OPINIE KLIENTÓW ===== -->
+    <section class="section" id="opinie">
+      <div class="container">
+        <p class="section-kicker reveal">co mówią klienci</p>
+        <h2 class="section-title reveal">Opinie</h2>
+
+        <!-- Aby dodać opinię: powiel cały <blockquote class="quote-card reveal"> -->
+        <div class="quotes-grid">
+
+          <!-- [PRZYKŁADOWA OPINIA — do podmiany] -->
+          <blockquote class="quote-card reveal">
+            <p class="quote-text">„Zdjęcia, przy których za każdym razem płaczę ze wzruszenia.
+            Byli z nami cały dzień i w ogóle ich nie czuliśmy — a mimo to uchwycili wszystko."</p>
+            <footer class="quote-author">Ania &amp; Tomek<span class="quote-role">reportaż ślubny</span></footer>
+          </blockquote>
+
+          <!-- [PRZYKŁADOWA OPINIA — do podmiany] -->
+          <blockquote class="quote-card reveal" data-delay="1">
+            <p class="quote-text">„Film promocyjny przerósł nasze oczekiwania. Profesjonalnie,
+            terminowo i z pomysłem, którego sami byśmy nie wymyślili."</p>
+            <footer class="quote-author">Marta K.<span class="quote-role">film dla marki</span></footer>
+          </blockquote>
+
+          <!-- [PRZYKŁADOWA OPINIA — do podmiany] -->
+          <blockquote class="quote-card reveal" data-delay="2">
+            <p class="quote-text">„Sesja rodzinna bez pozowania i spinania się — dzieci ich pokochały.
+            Naturalne kadry, które wiszą teraz u nas na ścianie."</p>
+            <footer class="quote-author">Rodzina Wiśniewskich<span class="quote-role">sesja rodzinna</span></footer>
+          </blockquote>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== STOPKA (wspólna dla wszystkich podstron) ===== -->
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <p class="footer-brand">czuły punkt Nowiccy</p>
+      <ul class="footer-social">
+        <!-- PLACEHOLDER: linki social media — do podmiany w ETAPIE 5 -->
+        <li><a href="#" aria-label="Instagram">Instagram</a></li>
+        <li><a href="https://www.facebook.com/MiqaStudioo/" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a></li>
+        <li><a href="#" aria-label="YouTube">YouTube</a></li>
+      </ul>
+      <p>&copy; 2026 czuły punkt Nowiccy. Wszystkie prawa zastrzeżone.<br>
+      <span class="footer-note">Nowa odsłona <a href="https://www.facebook.com/MiqaStudioo/" target="_blank" rel="noopener">Miqa Studio</a> — ta sama pasja, nowe imię.</span></p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
