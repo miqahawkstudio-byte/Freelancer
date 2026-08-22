@@ -1,0 +1,11 @@
+{
+  "name": "beat-marker",
+  "version": "0.1.0",
+  "description": "Beat Marker — Adobe Premiere Pro UXP plugin for automatic beat/BPM detection and real timeline markers.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test/run.mjs"
+  },
+  "license": "UNLICENSED"
+}

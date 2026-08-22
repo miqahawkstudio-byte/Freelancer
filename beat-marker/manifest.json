@@ -1,0 +1,29 @@
+{
+  "manifestVersion": 5,
+  "id": "com.beatmarker.panel",
+  "name": "Beat Marker",
+  "version": "0.1.0",
+  "main": "index.html",
+  "host": [
+    {
+      "app": "premierepro",
+      "minVersion": "25.0.0"
+    }
+  ],
+  "entrypoints": [
+    {
+      "type": "panel",
+      "id": "beatMarkerPanel",
+      "label": { "default": "Beat Marker" },
+      "minimumSize": { "width": 260, "height": 400 },
+      "maximumSize": { "width": 1000, "height": 2000 },
+      "preferredDockedSize": { "width": 320, "height": 720 },
+      "preferredFloatingSize": { "width": 340, "height": 760 }
+    }
+  ],
+  "requiredPermissions": {
+    "localFileSystem": "fullAccess",
+    "allowCodeGenerationFromStrings": false,
+    "enableAddon": true
+  }
+}

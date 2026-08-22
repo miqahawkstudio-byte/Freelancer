@@ -1,0 +1,122 @@
+<!--
+  Beat Marker — UXP panel entry (Krok 0 skeleton).
+  UI mirrors the approved mockup: SOURCE / DETECTION / RESULT / MARKERS /
+  FIRST BEAT / actions. Wiring lives in src/ui/panel.js.
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="src/ui/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="title">BEAT MARKER</header>
+
+      <!-- SOURCE -->
+      <section class="group">
+        <h2>SOURCE</h2>
+        <label class="radio"><input type="radio" name="source" value="timeline" checked /> Premiere Timeline</label>
+        <label class="radio"><input type="radio" name="source" value="file" /> Audio File</label>
+
+        <div id="timelineSource">
+          <label class="field">Sequence
+            <select id="sequenceSelect" disabled><option>—</option></select>
+          </label>
+          <label class="field">Audio Track
+            <select id="trackSelect" disabled><option>—</option></select>
+          </label>
+          <label class="field">Range
+            <select id="rangeSelect">
+              <option value="entire">Entire Sequence</option>
+              <option value="inout">In/Out</option>
+            </select>
+          </label>
+          <label class="field">Timeline audio
+            <select id="extractMode">
+              <option value="perClip">Selected track (per clip)</option>
+              <option value="mix">Whole sequence mix</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="fileSource" class="hidden">
+          <button id="chooseFile" class="btn">Choose File</button>
+          <div class="muted">Supported: WAV, MP3</div>
+          <div id="fileInfo" class="fileinfo hidden"></div>
+        </div>
+      </section>
+
+      <!-- DETECTION -->
+      <section class="group">
+        <h2>DETECTION</h2>
+        <label class="field">BPM
+          <select id="bpmMode"><option value="auto">Auto</option><option value="manual">Manual</option></select>
+        </label>
+        <input id="manualBpm" class="hidden numinput" type="number" min="30" max="300" step="0.1" placeholder="128" />
+        <label class="field">Time Signature
+          <select id="meterSelect"><option value="auto">Auto</option><option value="4/4">4/4</option><option value="3/4">3/4</option></select>
+        </label>
+        <label class="field">Sensitivity
+          <input id="sensitivity" type="range" min="0" max="100" value="50" />
+        </label>
+        <button id="analyzeBtn" class="btn primary">ANALYZE</button>
+      </section>
+
+      <!-- PROGRESS -->
+      <section id="progress" class="group hidden">
+        <div id="progressLabel" class="muted">Analyzing audio…</div>
+        <div class="progressbar"><div id="progressFill" class="fill"></div></div>
+        <button id="cancelBtn" class="btn">CANCEL</button>
+      </section>
+
+      <!-- RESULT -->
+      <section id="result" class="group hidden">
+        <h2>RESULT</h2>
+        <div class="kv"><span>BPM</span><b id="rBpm">—</b></div>
+        <div class="kv"><span>Meter</span><b id="rMeter">—</b></div>
+        <div class="kv"><span>Confidence</span><b id="rConf">—</b></div>
+        <div class="kv"><span>Duration</span><b id="rDur">—</b></div>
+        <div class="kv"><span>Beats</span><b id="rBeats">—</b></div>
+        <div class="kv"><span>Bars</span><b id="rBars">—</b></div>
+      </section>
+
+      <!-- MARKERS -->
+      <section class="group">
+        <h2>MARKERS</h2>
+        <label class="check"><input type="checkbox" id="mAll" checked /> All Beats</label>
+        <label class="check"><input type="checkbox" id="mStrong" checked /> Strong Beats</label>
+        <label class="check"><input type="checkbox" id="mDown" checked /> Downbeats</label>
+        <label class="field">Create
+          <select id="markerMode">
+            <option value="ALL_BEATS">Every Beat</option>
+            <option value="STRONG_BEATS">Strong Beats</option>
+            <option value="DOWNBEATS">Downbeats</option>
+            <option value="EVERY_2_BEATS">Every 2 Beats</option>
+            <option value="EVERY_4_BEATS">Every 4 Beats</option>
+          </select>
+        </label>
+      </section>
+
+      <!-- FIRST BEAT -->
+      <section class="group">
+        <h2>FIRST BEAT</h2>
+        <div class="kv"><span>Detected</span><b id="firstBeatTc">—</b></div>
+        <label class="field">Offset (ms)
+          <input id="offsetMs" class="numinput" type="number" value="0" step="1" />
+        </label>
+        <button id="setFirstBeat" class="btn">SET FIRST BEAT</button>
+      </section>
+
+      <!-- ACTIONS -->
+      <section class="group actions">
+        <button id="createMarkers" class="btn primary">CREATE MARKERS</button>
+        <button id="deleteMarkers" class="btn danger">DELETE GENERATED MARKERS</button>
+      </section>
+
+      <div id="statusBar" class="statusbar"></div>
+    </div>
+
+    <script type="module" src="src/ui/panel.js"></script>
+  </body>
+</html>
