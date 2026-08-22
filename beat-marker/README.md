@@ -100,5 +100,17 @@ later step (Windows x64 is the first target).
 - ✅ Timecode core (ticks/frames/DF/NDF, non-zero sequence start) — **tested**.
 - ✅ Pure BeatGrid, marker-mode selection, BPM octave correction — **tested**.
 - ✅ Safe "delete only our markers" tagging — **tested**.
-- ⏳ Next: marker creation wiring (Krok 3), engine (Krok 4), audio extraction
-  (Krok 5).
+- ✅ Krok 3: grid → timeline placement mapping + full marker create/delete
+  wiring. **Manual BPM path works end-to-end today** (build grid → exact-frame
+  markers) with no DSP engine required — **placement tested**.
+- ⏳ Next: DSP engine (Krok 4), audio extraction (Krok 5) to feed the same
+  create pipeline from analyzed audio.
+
+### Try it now (Manual BPM, in Premiere)
+
+1. Load the panel (see above) with a sequence open.
+2. DETECTION → BPM → **Manual**, type e.g. `128`, pick a meter.
+3. **BUILD GRID** → RESULT fills in.
+4. Pick a marker mode (Every Beat / Downbeats / …), optional First Beat Offset.
+5. **CREATE MARKERS** → real markers appear on the timeline (one Undo removes
+   them all). **DELETE GENERATED MARKERS** removes only Beat Marker's markers.
