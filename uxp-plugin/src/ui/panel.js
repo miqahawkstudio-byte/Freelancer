@@ -50,15 +50,32 @@ export async function renderPanel(root) {
 
   // --- Sekcja: sekwencja / źródło ---
   const seqNameValue = el("div", { class: "value", text: "…" });
+  const refreshBtn = el("button", { class: "btn", id: "refresh", text: "Odśwież" });
+  const seqMeta = el("div", { class: "muted", id: "seqMeta", text: "" });
+
   const audioSelect = el("select", { id: "audioTrack" });
   audioSelect.appendChild(el("option", { value: "", text: "—" }));
 
   const rangeSelect = el("select", { id: "range" });
-  rangeSelect.appendChild(el("option", { value: "full", text: "Cała sekwencja" }));
-  rangeSelect.appendChild(el("option", { value: "inout", text: "Zakres In/Out" }));
+  const optFull = el("option", { value: "full", text: "Cała sekwencja" });
+  const optInOut = el("option", { value: "inout", text: "Zakres In/Out" });
+  rangeSelect.appendChild(optFull);
+  rangeSelect.appendChild(optInOut);
+
+  const seqHeader = el("div", { class: "field-row" }, [field("Sekwencja", seqNameValue)]);
+  // Przycisk odświeżania obok nazwy sekwencji.
+  const seqHeaderWrap = el("div", { class: "field-row" }, [
+    el("div", { class: "field", style: "flex:1" }, [el("label", { text: "Sekwencja" }), seqNameValue]),
+    el("div", { class: "field", style: "flex:0 0 auto; justify-content:flex-end" }, [
+      el("label", { text: " " }),
+      refreshBtn,
+    ]),
+  ]);
+  void seqHeader;
 
   const sourceSection = el("div", { class: "section" }, [
-    field("Sekwencja", seqNameValue),
+    seqHeaderWrap,
+    seqMeta,
     el("div", { class: "field-row" }, [
       field("Ścieżka audio", audioSelect),
       field("Zakres", rangeSelect),
@@ -157,22 +174,97 @@ export async function renderPanel(root) {
     root.appendChild(n)
   );
 
-  // --- Dane sekwencji (placeholder do Etapu 3) ---
-  try {
-    const seq = await describeActiveSequence();
-    seqNameValue.textContent = seq.name;
-    if (seq.audioTracks.length) {
-      audioSelect.innerHTML = "";
-      for (const t of seq.audioTracks) {
-        audioSelect.appendChild(el("option", { value: String(t.index), text: t.name }));
+  // --- Odczyt / odświeżenie danych sekwencji (Etap 3) ---
+  async function refreshSequence() {
+    setStatus(status, "Odczyt sekwencji…");
+    try {
+      const seq = await describeActiveSequence();
+
+      if (!seq.available) {
+        seqNameValue.textContent = "(poza Premiere Pro)";
+        seqMeta.textContent = "Podgląd UI — uruchom w Premiere Pro, aby odczytać sekwencję.";
+        setStatus(status, "", "");
+        return;
       }
+
+      seqNameValue.textContent = seq.name;
+      seqMeta.textContent = formatSeqMeta(seq);
+
+      // Ścieżki audio.
+      audioSelect.innerHTML = "";
+      if (!seq.audioTracks.length) {
+        audioSelect.appendChild(el("option", { value: "", text: "brak ścieżek audio" }));
+        setStatus(status, "Sekwencja nie zawiera ścieżek audio.", "warn");
+      } else {
+        for (const t of seq.audioTracks) {
+          const flags = [];
+          if (t.muted) flags.push("wyciszona");
+          if (t.hasClips === false) flags.push("brak klipów");
+          const label = flags.length ? `${t.name} (${flags.join(", ")})` : t.name;
+          audioSelect.appendChild(el("option", { value: String(t.index), text: label }));
+        }
+        // Domyślnie pierwsza ścieżka z klipami, inaczej pierwsza.
+        const firstWithClips = seq.audioTracks.find((t) => t.hasClips !== false);
+        audioSelect.value = String((firstWithClips || seq.audioTracks[0]).index);
+        setStatus(status, "", "");
+      }
+
+      // Zakres In/Out — dostępny tylko gdy ustawiono niepusty zakres.
+      optInOut.disabled = !seq.hasInOut;
+      if (seq.hasInOut) {
+        optInOut.textContent = `Zakres In/Out (${formatRange(seq)})`;
+        rangeSelect.value = "inout";
+      } else {
+        optInOut.textContent = "Zakres In/Out (nie ustawiono)";
+        rangeSelect.value = "full";
+      }
+    } catch (e) {
+      seqNameValue.textContent = "—";
+      seqMeta.textContent = "";
+      audioSelect.innerHTML = "";
+      audioSelect.appendChild(el("option", { value: "", text: "—" }));
+      setStatus(status, e.userMessage || "Nie udało się odczytać sekwencji.", "error");
+      log.warn("describeActiveSequence failed", { code: e && e.code });
     }
-  } catch (e) {
-    setStatus(status, e.userMessage || "Nie udało się odczytać sekwencji.", "error");
-    log.warn("describeActiveSequence failed", { code: e.code });
   }
 
-  return { generateBtn, cancelBtn, bar, status, exportSrtBtn, createCaptionsBtn, openFolderBtn };
+  refreshBtn.addEventListener("click", refreshSequence);
+  await refreshSequence();
+
+  return {
+    generateBtn,
+    cancelBtn,
+    bar,
+    status,
+    exportSrtBtn,
+    createCaptionsBtn,
+    openFolderBtn,
+    refreshSequence,
+    getSelection: () => ({
+      audioTrackIndex: audioSelect.value === "" ? null : parseInt(audioSelect.value, 10),
+      range: rangeSelect.value,
+    }),
+  };
+}
+
+function formatSeqMeta(seq) {
+  const parts = [];
+  if (seq.fps) parts.push(`${Math.round(seq.fps * 1000) / 1000} fps`);
+  parts.push(`${seq.audioTracks.length} ścieżek audio`);
+  if (seq.zeroPointSec > 0) parts.push(`start ${secondsToClock(seq.zeroPointSec)}`);
+  return parts.join(" · ");
+}
+
+function formatRange(seq) {
+  return `${secondsToClock(seq.inPointSec)} – ${secondsToClock(seq.outPointSec)}`;
+}
+
+/** Sekundy → mm:ss (do zwięzłego podglądu w UI). */
+function secondsToClock(sec) {
+  const s = Math.max(0, Math.floor(sec));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
 }
 
 function clampInt(input, min, max) {
