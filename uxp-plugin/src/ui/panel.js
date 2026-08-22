@@ -125,6 +125,23 @@ export async function renderPanel(root) {
       field("Maks. czas (ms)", maxDur),
     ]),
     el("div", { class: "divider" }),
+    (() => {
+      const presetInput = el("input", {
+        type: "text",
+        id: "audioPreset",
+        placeholder: "Ścieżka do presetu .epr (audio-only WAV)",
+      });
+      presetInput.value = s.audioPresetPath || "";
+      presetInput.addEventListener("change", () => setSetting("audioPresetPath", presetInput.value.trim()));
+      return field("Preset eksportu audio (.epr)", presetInput);
+    })(),
+    (() => {
+      const backendInput = el("input", { type: "text", id: "backendUrl", placeholder: "http://127.0.0.1:8000" });
+      backendInput.value = s.backendUrl || "";
+      backendInput.addEventListener("change", () => setSetting("backendUrl", backendInput.value.trim()));
+      return field("Adres backendu STT", backendInput);
+    })(),
+    el("div", { class: "divider" }),
     checkbox("optPunct", "Automatyczna interpunkcja", s.autoPunctuation, (v) => setSetting("autoPunctuation", v)),
     checkbox("optSplit", "Inteligentny podział zdań", s.smartSentenceSplit, (v) => setSetting("smartSentenceSplit", v)),
     checkbox("optRep", "Usuwanie zbędnych powtórzeń", s.removeRepetitions, (v) => setSetting("removeRepetitions", v)),

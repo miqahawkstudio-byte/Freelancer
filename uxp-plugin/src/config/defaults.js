@@ -14,6 +14,11 @@ export const DEFAULT_SETTINGS = {
   // --- Backend ---
   backendUrl: "http://127.0.0.1:8000",
 
+  // --- Eksport audio z Premiere ---
+  // Ścieżka do presetu .epr (audio-only WAV). Użytkownik wskazuje własny preset
+  // (Adobe nie pozwala wygenerować poprawnego presetu z kodu). Patrz docs/AUDIO_PRESET.md.
+  audioPresetPath: "",
+
   // --- Segmentacja / łamanie linii ---
   maxCharsPerLine: 42,
   maxLines: 2,
