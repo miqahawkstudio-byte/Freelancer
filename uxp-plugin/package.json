@@ -1,0 +1,15 @@
+{
+  "name": "polish-subtitle-ai-uxp",
+  "version": "0.1.0",
+  "description": "Adobe Premiere Pro (UXP) plugin — automatyczne polskie napisy z audio na timeline (Whisper).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --format=esm --outfile=dist/index.js --external:premierepro --external:uxp",
+    "watch": "esbuild src/main.js --bundle --format=esm --outfile=dist/index.js --external:premierepro --external:uxp --watch",
+    "test": "node --test ../tests/unit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

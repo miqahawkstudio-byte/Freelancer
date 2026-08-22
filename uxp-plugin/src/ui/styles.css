@@ -1,0 +1,170 @@
+/* Polish Subtitle AI — ciemny motyw, styl narzędzia dla montażysty. */
+
+:root {
+  --bg: #1e1e1e;
+  --bg-elev: #2a2a2a;
+  --bg-input: #333333;
+  --border: #3d3d3d;
+  --text: #e6e6e6;
+  --text-dim: #9a9a9a;
+  --accent: #4a8cff;
+  --accent-hover: #5f9bff;
+  --ok: #3ecf8e;
+  --err: #ff5c5c;
+  --warn: #ffb84a;
+  --radius: 6px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  height: 100%;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  min-height: 100%;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.title .sub {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.section {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.field label {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field-row {
+  display: flex;
+  gap: 8px;
+}
+.field-row .field { flex: 1; }
+
+.value {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 5px 7px;
+  font-size: 12px;
+  width: 100%;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.btn {
+  border: none;
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--bg-input);
+  color: var(--text);
+}
+.btn:hover { background: #3c3c3c; }
+.btn:disabled { opacity: 0.45; cursor: default; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+.btn-danger { background: #4a2b2b; color: var(--err); }
+
+.actions { display: flex; flex-direction: column; gap: 8px; }
+.actions-row { display: flex; gap: 8px; }
+.actions-row .btn { flex: 1; }
+
+.progress {
+  height: 8px;
+  background: var(--bg-input);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress > .bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+.status {
+  font-size: 11px;
+  color: var(--text-dim);
+  min-height: 14px;
+}
+.status.error { color: var(--err); }
+.status.ok { color: var(--ok); }
+.status.warn { color: var(--warn); }
+
+.muted { color: var(--text-dim); font-size: 10px; }
+
+.divider { height: 1px; background: var(--border); margin: 2px 0; }
+
+details.settings summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text-dim);
+  user-select: none;
+}
+details.settings[open] summary { color: var(--text); }
