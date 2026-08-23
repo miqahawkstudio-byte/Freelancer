@@ -40,3 +40,19 @@ export async function pickAudioFile() {
   log('file', 'pickAudioFile', { name, ext, sizeBytes: buffer.length });
   return { name, ext, buffer, sizeBytes: buffer.length };
 }
+
+/**
+ * Prompt to save text (e.g. exported beat grid) to a file.
+ * @param {string} text
+ * @param {string} suggestedName e.g. "beatgrid.json"
+ * @returns {Promise<boolean>} false if the user cancels
+ */
+export async function saveTextFile(text, suggestedName) {
+  const { fs, formats } = uxpFs();
+  // VERIFY-IN-PPRO: getFileForSaving options across UXP versions.
+  const entry = await fs.getFileForSaving(suggestedName);
+  if (!entry) return false; // cancelled
+  await entry.write(text, { format: formats.utf8 });
+  log('file', 'saveTextFile', { name: entry.name, bytes: text.length });
+  return true;
+}

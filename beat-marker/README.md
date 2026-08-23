@@ -122,9 +122,14 @@ later step (Windows x64 is the first target).
   never stores audio; a repeat analysis is an instant cache hit), and a dev
   logger toggle — all **tested** (settings merge/validation, fingerprint
   stability, cache hit/miss + LRU).
+- ✅ Beat-grid **export** to JSON/CSV (with absolute timeline timecodes) —
+  pure + **tested** — plus an EXPORT BEAT GRID button.
+- ✅ **`TESTING-IN-PREMIERE.md`** — a step-by-step live-verification checklist
+  mapping every `VERIFY-IN-PPRO` spot to a concrete test.
 - ⏳ Remaining for a full timeline run in Premiere: configure a PCM-WAV `.epr`
   preset in Settings, and confirm the `VERIFY-IN-PPRO` encoder/marker calls on a
-  live Premiere 25.x. MP3 + native/WASM speed await their build.
+  live Premiere 25.x (see `TESTING-IN-PREMIERE.md`). MP3 + native/WASM speed
+  await their build.
 
 ## Engine benchmark
 

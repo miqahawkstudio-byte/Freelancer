@@ -22,7 +22,8 @@ import { buildGridFromBpm, beatsPerBar } from '../beatGrid/BeatGrid.js';
 import { computePlacements } from '../beatGrid/placement.js';
 import { decodeWav } from '../audio/WaveReader.js';
 import { assembleTrackAudio } from '../engine/timelineAssemble.js';
-import { pickAudioFile } from '../premiere/FileSource.js';
+import { pickAudioFile, saveTextFile } from '../premiere/FileSource.js';
+import { gridToJSON, gridToCSV } from '../beatGrid/exportGrid.js';
 import { renderTimelineAudio, cleanup } from '../premiere/AudioExtractor.js';
 import { SettingsStore, memoryBackend } from '../settings/SettingsStore.js';
 import { Analyzer } from '../analysis/Analyzer.js';
@@ -316,6 +317,20 @@ function onCancel() {
   status('Cancelling…', '');
 }
 
+async function onExportGrid() {
+  if (!currentGrid) return status('Build or analyze a grid first.', 'error');
+  const format = $('exportFormat').value;
+  const opts = { seqInfo, rangeStartSeconds };
+  const text = format === 'csv' ? gridToCSV(currentGrid, opts) : gridToJSON(currentGrid, opts);
+  if (!isUxp()) return status('Open in Premiere Pro to save the export.', '');
+  try {
+    const saved = await saveTextFile(text, `beatgrid.${format}`);
+    status(saved ? `Beat grid exported (${format.toUpperCase()}).` : 'Export cancelled.', saved ? 'ok' : '');
+  } catch (e) {
+    status(toBeatMarkerError(e).userMessage, 'error');
+  }
+}
+
 function wire() {
   document
     .querySelectorAll('input[name="source"]')
@@ -327,6 +342,7 @@ function wire() {
   $('setFirstBeat').addEventListener('click', onSetFirstBeat);
   $('chooseFile').addEventListener('click', onChooseFile);
   $('cancelBtn').addEventListener('click', onCancel);
+  $('exportGrid').addEventListener('click', onExportGrid);
 
   // Settings: persist on change and apply side effects.
   ['sensitivity', 'markerMode', 'meterSelect', 'offsetMs', 'presetPath', 'cacheEnabled', 'keepTemp', 'devMode'].forEach(
