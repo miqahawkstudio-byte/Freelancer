@@ -5,9 +5,9 @@ Architektura i decyzje: [`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
 
 ## Status
 
-Etap 2 (z 12): struktura projektu + minimalny, ładowalny panel.
-Pipeline (sekwencja → audio → STT → segmentacja → SRT → napisy) jest podpinany
-w kolejnych etapach. Przyciski generowania są celowo wyłączone z opisem etapu.
+Kompletny (Etapy 1–12). Pełny pipeline: sekwencja → eksport audio → STT (Whisper)
+→ offset timeline → segmentacja → SRT → import do Premiere (best-effort).
+Instalacja i workflow: [`../docs/INSTALL.md`](../docs/INSTALL.md).
 
 ## Wymagania
 

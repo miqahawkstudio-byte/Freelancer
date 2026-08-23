@@ -172,14 +172,14 @@ trafiają tylko do logów developerskich (bez pełnego audio / pełnej transkryp
 ## 8. Etapy realizacji
 
 1. ✅ Analiza + architektura (ten dokument)
-2. Struktura projektu + minimalny działający plugin UXP
-3. Wykrywanie aktywnej sekwencji i ścieżek audio
-4. Pozyskiwanie audio (exportSequence → WAV)
-5. Backend STT + Whisper (word timestamps, cancel, health/models)
-6. Transkrypcja + timestampy (offset timeline)
-7. Algorytm segmentacji napisów
-8. Generator SRT
-9. Wstawianie napisów do Premiere (best-effort)
-10. UI, ustawienia, progress, obsługa błędów
-11. Testy jednostkowe
-12. Build produkcyjny + instrukcja instalacji
+2. ✅ Struktura projektu + minimalny działający plugin UXP
+3. ✅ Wykrywanie aktywnej sekwencji i ścieżek audio
+4. ✅ Pozyskiwanie audio (exportSequence → WAV)
+5. ✅ Backend STT + Whisper (word timestamps, cancel, health/models)
+6. ✅ Transkrypcja + timestampy (offset timeline)
+7. ✅ Algorytm segmentacji napisów
+8. ✅ Generator SRT
+9. ✅ Wstawianie napisów do Premiere (best-effort: import + fallback)
+10. ✅ UI, ustawienia, progress, obsługa błędów
+11. ✅ Testy jednostkowe (plugin + backend)
+12. ✅ Build produkcyjny + instrukcja instalacji (docs/INSTALL.md)

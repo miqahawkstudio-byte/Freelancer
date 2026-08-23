@@ -5,8 +5,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/main.js --bundle --format=esm --outfile=dist/index.js --external:premierepro --external:uxp",
-    "watch": "esbuild src/main.js --bundle --format=esm --outfile=dist/index.js --external:premierepro --external:uxp --watch",
+    "build": "node scripts/build.mjs",
+    "build:prod": "node scripts/build.mjs --prod",
+    "watch": "node scripts/build.mjs --watch",
+    "package": "node scripts/build.mjs --prod && node scripts/package.mjs",
     "test": "node --test \"tests/unit/**/*.test.js\""
   },
   "devDependencies": {
