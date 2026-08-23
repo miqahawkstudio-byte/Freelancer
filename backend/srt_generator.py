@@ -3,10 +3,11 @@ import re
 
 
 def format_timestamp(seconds: float) -> str:
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    secs = int(seconds % 60)
-    millis = int((seconds % 1) * 1000)
+    # Zaokrąglamy do pełnych milisekund (unikamy błędu obcięcia, np. 2.120 -> 119).
+    total_ms = int(round(max(0.0, seconds) * 1000))
+    hours, rem = divmod(total_ms, 3_600_000)
+    minutes, rem = divmod(rem, 60_000)
+    secs, millis = divmod(rem, 1000)
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
