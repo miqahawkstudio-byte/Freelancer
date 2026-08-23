@@ -94,6 +94,9 @@ later step (Windows x64 is the first target).
   Snap to Beat. Groundwork present: `beatGrid/snap.js` (pure, tested) exposes
   nearest-beat snapping and beat-aligned cut points so the BeatGrid is ready to
   drive clip moves/cuts; only the Premiere `move()`/razor calls remain for V2.
+  `engine/sections.js` (pure, tested) adds an RMS energy envelope, silence
+  detection, and drop/build (energy-change) detection — the basis for V2 drop /
+  transition / silence markers.
 
 ### Implemented so far
 

@@ -36,6 +36,29 @@ export function clickTrack({ bpm, seconds = 8, sampleRate = 44100, offset = 0, a
   return { samples: x, sampleRate };
 }
 
+/**
+ * Concatenate amplitude sections of deterministic white noise. Useful for
+ * energy/section tests. amp is the peak amplitude of each segment (0 = silence).
+ * @param {{ sampleRate?:number, parts:Array<{seconds:number, amp:number}>, seed?:number }} o
+ * @returns {{ samples:Float32Array, sampleRate:number }}
+ */
+export function segments({ sampleRate = 44100, parts, seed = 12345 }) {
+  const total = parts.reduce((n, p) => n + Math.floor(p.seconds * sampleRate), 0);
+  const x = new Float32Array(total);
+  let s = seed >>> 0;
+  const rand = () => {
+    // LCG -> [-1, 1)
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return (s / 0xffffffff) * 2 - 1;
+  };
+  let o = 0;
+  for (const p of parts) {
+    const len = Math.floor(p.seconds * sampleRate);
+    for (let i = 0; i < len; i++) x[o++] = rand() * p.amp;
+  }
+  return { samples: x, sampleRate };
+}
+
 /** Encode mono Float32 samples as a 16-bit PCM WAV (Uint8Array). */
 export function encodeWav16(samples, sampleRate) {
   const dataLen = samples.length * 2;
