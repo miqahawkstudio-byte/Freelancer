@@ -130,6 +130,33 @@ body {
   line-height: 1.6;
 }
 
+.waveform {
+  width: 100%;
+  height: 80px;
+  display: block;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.wavelegend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.wavelegend .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-left: 8px;
+}
+.wavelegend .dot.down { background: var(--danger); }
+.wavelegend .dot.strong { background: #e6c84a; }
+.wavelegend .dot.beat { background: var(--ok); }
+
 .actions .btn { margin-top: 8px; }
 
 .statusbar {

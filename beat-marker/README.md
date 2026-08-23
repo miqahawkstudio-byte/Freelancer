@@ -124,6 +124,8 @@ later step (Windows x64 is the first target).
   stability, cache hit/miss + LRU).
 - ✅ Beat-grid **export** to JSON/CSV (with absolute timeline timecodes) —
   pure + **tested** — plus an EXPORT BEAT GRID button.
+- ✅ **Waveform** (V1.1): Canvas render of the analyzed audio with beats /
+  strong beats / downbeats overlaid; peak computation is pure + **tested**.
 - ✅ **`TESTING-IN-PREMIERE.md`** — a step-by-step live-verification checklist
   mapping every `VERIFY-IN-PPRO` spot to a concrete test.
 - ⏳ Remaining for a full timeline run in Premiere: configure a PCM-WAV `.epr`

@@ -21,6 +21,7 @@ import { framesToTimecode, secondsToFrames, formatDuration } from '../premiere/T
 import { buildGridFromBpm, beatsPerBar } from '../beatGrid/BeatGrid.js';
 import { computePlacements } from '../beatGrid/placement.js';
 import { decodeWav } from '../audio/WaveReader.js';
+import { computePeaks } from '../audio/waveformPeaks.js';
 import { assembleTrackAudio } from '../engine/timelineAssemble.js';
 import { pickAudioFile, saveTextFile } from '../premiere/FileSource.js';
 import { gridToJSON, gridToCSV } from '../beatGrid/exportGrid.js';
@@ -36,6 +37,8 @@ let seqInfo = null;
 let currentGrid = null;
 let rangeStartSeconds = 0;
 let cancelFlag = false;
+let lastSamples = null; // analyzed audio for the waveform (null for manual grids)
+let lastSampleRate = 0;
 
 const settings = new SettingsStore(localStorageBackend());
 const analyzer = new Analyzer();
@@ -181,6 +184,58 @@ function saveSettingsFromUI() {
   setDevMode(settings.get('devMode'));
 }
 
+// ---- waveform --------------------------------------------------------------
+
+function setWaveform(samples, sampleRate) {
+  lastSamples = samples;
+  lastSampleRate = sampleRate;
+  drawWaveform();
+}
+
+function hideWaveform() {
+  lastSamples = null;
+  $('waveformSection').classList.add('hidden');
+}
+
+function drawWaveform() {
+  const cv = $('waveform');
+  if (!cv || !lastSamples || lastSamples.length === 0) return hideWaveform();
+  $('waveformSection').classList.remove('hidden');
+
+  const w = Math.max(1, cv.clientWidth || 300);
+  const h = 80;
+  cv.width = w;
+  cv.height = h;
+  const ctx = cv.getContext('2d');
+  if (!ctx) return;
+
+  ctx.clearRect(0, 0, w, h);
+  const mid = h / 2;
+  const { mins, maxs } = computePeaks(lastSamples, w);
+  ctx.strokeStyle = '#6f6f78';
+  ctx.beginPath();
+  for (let x = 0; x < w; x++) {
+    ctx.moveTo(x + 0.5, mid - maxs[x] * mid);
+    ctx.lineTo(x + 0.5, mid - mins[x] * mid);
+  }
+  ctx.stroke();
+
+  const dur = lastSamples.length / lastSampleRate;
+  if (currentGrid && dur > 0) {
+    for (const b of currentGrid.beats) {
+      const x = Math.round((b.time / dur) * w);
+      if (x < 0 || x > w) continue;
+      ctx.strokeStyle = b.type === 'downbeat' ? '#e0533d' : b.type === 'strong' ? '#e6c84a' : '#46c26a';
+      ctx.globalAlpha = b.type === 'beat' ? 0.5 : 0.9;
+      ctx.beginPath();
+      ctx.moveTo(x + 0.5, 0);
+      ctx.lineTo(x + 0.5, h);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
 /** ANALYZE / BUILD GRID dispatcher. */
 async function onAnalyze() {
   const source = document.querySelector('input[name="source"]:checked').value;
@@ -201,6 +256,7 @@ function buildManualGrid() {
     confidence: 1,
   });
   rangeStartSeconds = 0;
+  hideWaveform(); // manual grid has no audio to show
   renderResult();
   status(`Built ${currentGrid.beats.length} beats at ${bpm} BPM.`, 'ok');
 }
@@ -238,6 +294,7 @@ async function analyzeTimeline() {
     }
     const { grid, cached } = analyzer.analyze(audio, opts);
     currentGrid = grid;
+    setWaveform(audio.samples, audio.sampleRate);
     renderResult();
     status(`Analyzed: ${grid.bpm} BPM, ${grid.beats.length} beats${cached ? ' (cached)' : ''}.`, 'ok');
   } catch (e) {
@@ -265,6 +322,7 @@ async function onChooseFile() {
     const { grid, cached } = analyzer.analyze({ samples: w.samples, sampleRate: w.sampleRate, durationSeconds: w.durationSeconds }, analyzeOptions());
     currentGrid = grid;
     rangeStartSeconds = 0;
+    setWaveform(w.samples, w.sampleRate);
     $('fileInfo').textContent += ` · ${formatDuration(w.durationSeconds)}`;
     renderResult();
     status(`Analyzed ${picked.name}: ${grid.bpm} BPM${cached ? ' (cached)' : ''}.`, 'ok');
@@ -351,6 +409,10 @@ function wire() {
   $('clearCache').addEventListener('click', () => {
     analyzer.clear();
     status('Analysis cache cleared.', 'ok');
+  });
+
+  window.addEventListener('resize', () => {
+    if (lastSamples) drawWaveform();
   });
 
   initSettings();
