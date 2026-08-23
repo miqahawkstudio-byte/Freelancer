@@ -25,8 +25,15 @@ import { validateGrid } from '../beatGrid/BeatGrid.js';
  */
 export function analyzeAudioJs(audio, options = {}) {
   const { samples, sampleRate } = audio;
-  const { minBpm = 40, maxBpm = 220, manualBpm, sensitivity = 0.5, onProgress, isCancelled } =
-    options;
+  const {
+    minBpm = 40,
+    maxBpm = 220,
+    manualBpm,
+    sensitivity = 0.5,
+    silenceFloor = 0.005,
+    onProgress,
+    isCancelled,
+  } = options;
 
   const tick = (p) => {
     if (typeof onProgress === 'function') onProgress(p);
@@ -61,25 +68,41 @@ export function analyzeAudioJs(audio, options = {}) {
   tick(0.65);
 
   const periodFrames = (fps * 60) / bpm;
-  const beatFrames = trackBeats(env, periodFrames);
+  const periodSeconds = 60 / bpm;
+  let beatFrames = trackBeats(env, periodFrames);
+
+  // Gap gating: drop beats that land in silence (e.g. between clips on a track).
+  // Gaps are true digital silence, so a small absolute RMS floor removes phantom
+  // beats there without touching genuinely quiet musical beats.
+  const rmsWin = Math.max(1, Math.round(sampleRate * 0.05));
+  beatFrames = beatFrames.filter(
+    (f) => localRms(samples, Math.round((f * sampleRate) / fps), rmsWin) >= silenceFloor
+  );
   tick(0.85);
+
+  if (beatFrames.length === 0) {
+    return { bpm: round2(bpm), meter: '4/4', confidence: 0, firstBeat: 0, beats: [], downbeats: [] };
+  }
 
   const { bpb, downbeatOffset, contrast } = estimateMeter(env, beatFrames);
   const meter = `${bpb}/4`;
 
-  // Assemble beats with bar/beatInBar numbering (normalized so bars start at 1).
+  // Number beats by GRID position (time), not array position, so a gap does not
+  // renumber the beats after it — bar/beat counts stay musically correct.
   const strongThreshold = 0.6 + 0.3 * (1 - sensitivity);
-  const rawBeats = beatFrames.map((f, i) => {
+  const t0 = beatFrames[0] / fps;
+  const rawBeats = beatFrames.map((f) => {
     const time = f / fps;
-    const beatInBar = (((i - downbeatOffset) % bpb) + bpb) % bpb + 1;
+    const gi = Math.round((time - t0) / periodSeconds); // 0-based grid index
+    const beatInBar = (((gi - downbeatOffset) % bpb) + bpb) % bpb + 1;
     const strength = clamp01(env[Math.min(env.length - 1, f)]);
-    return { time, index: i + 1, bpb, beatInBar, strength, _rawBar: Math.floor((i - downbeatOffset) / bpb) };
+    return { time, gi, beatInBar, strength, _rawBar: Math.floor((gi - downbeatOffset) / bpb) };
   });
-  const minBar = rawBeats.length ? Math.min(...rawBeats.map((b) => b._rawBar)) : 0;
-  const beats = rawBeats.map((b) => {
+  const minBar = Math.min(...rawBeats.map((b) => b._rawBar));
+  const beats = rawBeats.map((b, i) => {
     const bar = b._rawBar - minBar + 1;
     const type = b.beatInBar === 1 ? 'downbeat' : b.strength >= strongThreshold ? 'strong' : 'beat';
-    return { time: round6(b.time), index: b.index, bar, beatInBar: b.beatInBar, strength: round3(b.strength), type };
+    return { time: round6(b.time), index: i + 1, bar, beatInBar: b.beatInBar, strength: round3(b.strength), type };
   });
   const downbeats = beats.filter((b) => b.type === 'downbeat').map((b) => b.time);
 
@@ -102,6 +125,20 @@ export function analyzeAudioJs(audio, options = {}) {
   };
   validateGrid(grid);
   return grid;
+}
+
+/** RMS of the samples in a window centered on `center`. */
+function localRms(samples, center, win) {
+  const half = win >> 1;
+  let s = 0;
+  let n = 0;
+  const a = Math.max(0, center - half);
+  const b = Math.min(samples.length, center + half);
+  for (let i = a; i < b; i++) {
+    s += samples[i] * samples[i];
+    n++;
+  }
+  return n ? Math.sqrt(s / n) : 0;
 }
 
 function clamp01(n) {

@@ -110,8 +110,14 @@ later step (Windows x64 is the first target).
   160/174 BPM (mean error ~0.4 BPM, ~277× realtime). Native aubio `.uxpaddon`
   + WASM backends are scaffolded behind the same API (`native/`), chosen by the
   benchmark harness (`npm run bench`).
-- ⏳ Next: audio extraction (Krok 5) — feed timeline/file audio into the same
-  engine → the same marker pipeline.
+- ✅ Krok 5: audio extraction + source wiring. **Audio File** (WAV) works
+  end-to-end: pick → decode → analyze → markers. **Timeline** rendering via the
+  encoder (per-clip or whole-mix) is wired against the documented API
+  (`AudioExtractor`, `VERIFY-IN-PPRO` on encoder/preset details) and feeds a pure,
+  **tested** multi-clip assembler that preserves timeline positions and keeps
+  **gaps silent** (no phantom beats between clips). Progress + Cancel plumbed.
+- ⏳ Next: settings (preset path, keep-temp, defaults), strong-beat UI polish,
+  and — once you build them — the native/WASM engine benchmark.
 
 ## Engine benchmark
 
