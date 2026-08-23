@@ -1,6 +1,6 @@
 import { test, eq, assert } from './harness.mjs';
 import { decodeWav } from '../src/audio/WaveReader.js';
-import { estimateMeter } from '../src/engine/dsp.js';
+import { estimateMeter, estimateMeterFromAccents } from '../src/engine/dsp.js';
 
 test('decodeWav throws a typed error for a non-WAV buffer', () => {
   let err = null;
@@ -62,4 +62,14 @@ test('estimateMeter detects 4/4 from an accent-every-4 pattern', () => {
   }
   const m = estimateMeter(env, beatFrames);
   eq(m.bpb, 4);
+});
+
+test('estimateMeterFromAccents uses grid positions, so a gap does not shift downbeats', () => {
+  // Beats present at grid indices 0,1,2,3, then 6,7,8,9 (indices 4,5 fell in a
+  // gap). Accents are on true downbeats gi%4===0 -> gi 0 and 8.
+  const positions = [0, 1, 2, 3, 6, 7, 8, 9];
+  const strengths = positions.map((gi) => (gi % 4 === 0 ? 1.0 : 0.4));
+  const m = estimateMeterFromAccents(positions, strengths, [4, 3]);
+  eq(m.bpb, 4);
+  eq(m.downbeatOffset, 0); // grid-based: correct. Array-index-based would mis-pick.
 });

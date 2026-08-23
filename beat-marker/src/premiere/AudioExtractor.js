@@ -77,6 +77,7 @@ export async function renderTimelineAudio(opts) {
 
   try {
     if (mode === 'mix') {
+      if (isCancelled && isCancelled()) throw cancelled();
       const buffer = await renderSequenceMix(encoder, presetPath, range, onProgress, isCancelled);
       return { mode, buffer };
     }
@@ -112,7 +113,8 @@ async function renderClip(encoder, clip, presetPath) {
 }
 
 // VERIFY-IN-PPRO: encodeSequence signature + work-area range for In/Out.
-async function renderSequenceMix(encoder, presetPath, range, onProgress) {
+async function renderSequenceMix(encoder, presetPath, range, onProgress, isCancelled) {
+  if (isCancelled && isCancelled()) throw cancelled();
   const api = ppro();
   const project = await api.Project.getActiveProject();
   const sequence = await project.getActiveSequence();
@@ -121,6 +123,7 @@ async function renderSequenceMix(encoder, presetPath, range, onProgress) {
   _created.push(file);
   const workArea = range && range.inTicks != null ? 2 /* in/out */ : 0 /* entire */;
   await encoder.encodeSequence(sequence, file.nativePath, presetPath, workArea, false);
+  if (isCancelled && isCancelled()) throw cancelled();
   if (onProgress) onProgress(1);
   return readBytes(file);
 }

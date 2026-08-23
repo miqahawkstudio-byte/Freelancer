@@ -8,7 +8,7 @@
  * The native/WASM backends must return the identical shape so they are drop-in.
  */
 
-import { onsetEnvelope, estimateTempo, trackBeats, estimateMeter, onsetPeaks } from './dsp.js';
+import { onsetEnvelope, estimateTempo, trackBeats, estimateMeterFromAccents, onsetPeaks } from './dsp.js';
 import { correctOctave } from '../beatGrid/bpm.js';
 import { validateGrid } from '../beatGrid/BeatGrid.js';
 
@@ -31,6 +31,7 @@ export function analyzeAudioJs(audio, options = {}) {
     manualBpm,
     sensitivity = 0.5,
     silenceFloor = 0.005,
+    meterHint = 'auto',
     onProgress,
     isCancelled,
   } = options;
@@ -84,18 +85,25 @@ export function analyzeAudioJs(audio, options = {}) {
     return { bpm: round2(bpm), meter: '4/4', confidence: 0, firstBeat: 0, beats: [], downbeats: [] };
   }
 
-  const { bpb, downbeatOffset, contrast } = estimateMeter(env, beatFrames);
-  const meter = `${bpb}/4`;
-
   // Number beats by GRID position (time), not array position, so a gap does not
   // renumber the beats after it — bar/beat counts stay musically correct.
   const strongThreshold = 0.6 + 0.3 * (1 - sensitivity);
   const t0 = beatFrames[0] / fps;
-  const rawBeats = beatFrames.map((f) => {
+  const giList = beatFrames.map((f) => Math.round((f / fps - t0) / periodSeconds));
+  const strengthList = beatFrames.map((f) => clamp01(env[Math.min(env.length - 1, f)]));
+
+  // Honor an explicit meter hint (Time Signature dropdown); else auto 4/4 vs 3/4.
+  // Meter is estimated over GRID positions so its downbeat phase matches the
+  // numbering below even when beats were dropped in gaps.
+  const meterCandidates = meterHint === '3/4' ? [3] : meterHint === '4/4' ? [4] : [4, 3];
+  const { bpb, downbeatOffset, contrast } = estimateMeterFromAccents(giList, strengthList, meterCandidates);
+  const meter = `${bpb}/4`;
+
+  const rawBeats = beatFrames.map((f, i) => {
     const time = f / fps;
-    const gi = Math.round((time - t0) / periodSeconds); // 0-based grid index
+    const gi = giList[i];
     const beatInBar = (((gi - downbeatOffset) % bpb) + bpb) % bpb + 1;
-    const strength = clamp01(env[Math.min(env.length - 1, f)]);
+    const strength = strengthList[i];
     return { time, gi, beatInBar, strength, _rawBar: Math.floor((gi - downbeatOffset) / bpb) };
   });
   const minBar = Math.min(...rawBeats.map((b) => b._rawBar));

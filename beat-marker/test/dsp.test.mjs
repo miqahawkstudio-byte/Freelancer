@@ -44,6 +44,14 @@ test('downbeats are a subset and every 4th beat in 4/4', () => {
   eq(grid.downbeats.every((t) => grid.beats.some((b) => b.time === t && b.type === 'downbeat')), true);
 });
 
+test('meterHint forces the reported meter (3/4 and 4/4)', () => {
+  const audio = clickTrack({ bpm: 120, seconds: 12, accentEvery: 4 });
+  const three = analyzeAudio(audio, { minBpm: 60, maxBpm: 200, meterHint: '3/4' });
+  eq(three.meter, '3/4');
+  const four = analyzeAudio(audio, { minBpm: 60, maxBpm: 200, meterHint: '4/4' });
+  eq(four.meter, '4/4');
+});
+
 test('manual BPM bypasses tempo estimation', () => {
   const audio = clickTrack({ bpm: 128, seconds: 6 });
   const grid = analyzeAudio(audio, { manualBpm: 128 });

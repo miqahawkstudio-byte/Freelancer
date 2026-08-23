@@ -15,8 +15,8 @@ import { secondsToFrames, framesToTimecode } from '../premiere/Timecode.js';
  * @returns {string} JSON
  */
 export function gridToJSON(grid, opts = {}) {
-  const { seqInfo, rangeStartSeconds = 0, pretty = true } = opts;
-  const tc = timecoder(seqInfo, rangeStartSeconds);
+  const { seqInfo, rangeStartSeconds = 0, extraOffsetSeconds = 0, pretty = true } = opts;
+  const tc = timecoder(seqInfo, rangeStartSeconds + extraOffsetSeconds);
   const out = {
     bpm: grid.bpm,
     meter: grid.meter,
@@ -35,8 +35,8 @@ export function gridToJSON(grid, opts = {}) {
  * @returns {string} CSV with a header row
  */
 export function gridToCSV(grid, opts = {}) {
-  const { seqInfo, rangeStartSeconds = 0 } = opts;
-  const tc = timecoder(seqInfo, rangeStartSeconds);
+  const { seqInfo, rangeStartSeconds = 0, extraOffsetSeconds = 0 } = opts;
+  const tc = timecoder(seqInfo, rangeStartSeconds + extraOffsetSeconds);
   const header = ['index', 'bar', 'beatInBar', 'type', 'timeSeconds', 'strength'];
   if (tc) header.push('timelineTimecode');
 
@@ -50,11 +50,11 @@ export function gridToCSV(grid, opts = {}) {
 }
 
 /** Build an absolute-timecode function from sequence info, or null. */
-function timecoder(seqInfo, rangeStartSeconds) {
+function timecoder(seqInfo, offsetSeconds) {
   if (!seqInfo || seqInfo.ticksPerFrame == null) return null;
   const zeroFrame = seqInfo.zeroPointTicks / seqInfo.ticksPerFrame;
   return (t) => {
-    const frame = secondsToFrames(t + rangeStartSeconds, seqInfo) + zeroFrame;
+    const frame = secondsToFrames(t + offsetSeconds, seqInfo) + zeroFrame;
     return framesToTimecode(frame, seqInfo, !!seqInfo.dropFrame);
   };
 }

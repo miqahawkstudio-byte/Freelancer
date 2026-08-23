@@ -47,3 +47,9 @@ test('rangeStartSeconds offsets the exported timecodes', () => {
   const parsed = JSON.parse(gridToJSON(grid, { seqInfo, rangeStartSeconds: 5 }));
   eq(parsed.beats[0].timelineTimecode, '01:00:05:00');
 });
+
+test('extraOffsetSeconds (First Beat Offset) shifts exported timecodes', () => {
+  // +1s offset @25fps -> first beat exported at 01:00:01:00, matching markers.
+  const parsed = JSON.parse(gridToJSON(grid, { seqInfo, extraOffsetSeconds: 1 }));
+  eq(parsed.beats[0].timelineTimecode, '01:00:01:00');
+});

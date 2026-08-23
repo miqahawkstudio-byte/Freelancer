@@ -122,13 +122,13 @@ export function trackBeats(env, periodFrames) {
 }
 
 /**
- * Choose meter (4/4 vs 3/4) and the downbeat offset by accent contrast:
- * the arrangement where bar-starts carry the most onset energy relative to
- * other beats wins. Returns { bpb, downbeatOffset, contrast }.
+ * Choose meter (4/4 vs 3/4) and the downbeat offset by accent contrast, given
+ * each beat's GRID position and its strength. Positions must be the grid index
+ * (which skips beats dropped in gaps), so the chosen downbeat phase matches how
+ * the caller numbers bars. Returns { bpb, downbeatOffset, contrast }.
  */
-export function estimateMeter(env, beatFrames, candidates = [4, 3]) {
-  const strengths = beatFrames.map((f) => env[Math.min(env.length - 1, Math.max(0, f))]);
-  let best = { bpb: 4, downbeatOffset: 0, contrast: -Infinity };
+export function estimateMeterFromAccents(positions, strengths, candidates = [4, 3]) {
+  let best = { bpb: candidates[0] ?? 4, downbeatOffset: 0, contrast: -Infinity };
 
   for (const bpb of candidates) {
     for (let d = 0; d < bpb; d++) {
@@ -136,8 +136,8 @@ export function estimateMeter(env, beatFrames, candidates = [4, 3]) {
       let onCount = 0;
       let offSum = 0;
       let offCount = 0;
-      for (let i = 0; i < strengths.length; i++) {
-        if (((i - d) % bpb + bpb) % bpb === 0) {
+      for (let i = 0; i < positions.length; i++) {
+        if ((((positions[i] - d) % bpb) + bpb) % bpb === 0) {
           onSum += strengths[i];
           onCount++;
         } else {
@@ -152,6 +152,16 @@ export function estimateMeter(env, beatFrames, candidates = [4, 3]) {
     }
   }
   return best;
+}
+
+/**
+ * Convenience wrapper for the contiguous case: positions are array indices and
+ * strengths come straight from the onset envelope at each beat frame.
+ */
+export function estimateMeter(env, beatFrames, candidates = [4, 3]) {
+  const strengths = beatFrames.map((f) => env[Math.min(env.length - 1, Math.max(0, f))]);
+  const positions = beatFrames.map((_, i) => i);
+  return estimateMeterFromAccents(positions, strengths, candidates);
 }
 
 /** Onset peak times (seconds) — used for BPM octave scoring. */

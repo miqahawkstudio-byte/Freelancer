@@ -136,7 +136,9 @@ function renderResult() {
   $('rBeats').textContent = String(currentGrid.beats.length);
   $('rBars').textContent = String(bars);
   if (seqInfo) {
-    const abs = currentGrid.firstBeat + rangeStartSeconds;
+    // Include the First Beat Offset so the displayed timecode matches where the
+    // first marker actually lands (CREATE MARKERS applies the same offset).
+    const abs = currentGrid.firstBeat + rangeStartSeconds + offsetSeconds();
     const frame = secondsToFrames(abs, seqInfo) + seqInfo.zeroPointTicks / seqInfo.ticksPerFrame;
     $('firstBeatTc').textContent = framesToTimecode(frame, seqInfo, seqInfo.dropFrame);
   }
@@ -344,15 +346,26 @@ function onSetFirstBeat() {
   status(off ? `First beat offset: ${off * 1000} ms.` : 'First beat offset cleared.', '');
 }
 
+/** Beat types allowed by the MARKERS checkboxes (composed with the Create mode). */
+function allowedMarkerTypes() {
+  const set = new Set();
+  if ($('mAll').checked) set.add('beat');
+  if ($('mStrong').checked) set.add('strong');
+  if ($('mDown').checked) set.add('downbeat');
+  return set;
+}
+
 async function onCreateMarkers() {
   if (!isUxp()) return status('Open in Premiere Pro to create markers.', '');
   if (!currentGrid || !seqInfo) return status('Build or analyze a grid first.', 'error');
+  const allowed = allowedMarkerTypes();
+  if (allowed.size === 0) return status('Select at least one beat type (All / Strong / Downbeats).', '');
   try {
     const placements = computePlacements(currentGrid, $('markerMode').value, seqInfo, {
       rangeStartSeconds,
       extraOffsetSeconds: offsetSeconds(),
-    });
-    if (placements.length === 0) return status('No markers to create for this mode/range.', '');
+    }).filter((p) => allowed.has(p.beat.type));
+    if (placements.length === 0) return status('No markers to create for this mode/type/range.', '');
     const n = await createMarkers(placements);
     status(`Created ${n} marker(s).`, 'ok');
   } catch (e) {
@@ -378,7 +391,7 @@ function onCancel() {
 async function onExportGrid() {
   if (!currentGrid) return status('Build or analyze a grid first.', 'error');
   const format = $('exportFormat').value;
-  const opts = { seqInfo, rangeStartSeconds };
+  const opts = { seqInfo, rangeStartSeconds, extraOffsetSeconds: offsetSeconds() };
   const text = format === 'csv' ? gridToCSV(currentGrid, opts) : gridToJSON(currentGrid, opts);
   if (!isUxp()) return status('Open in Premiere Pro to save the export.', '');
   try {
