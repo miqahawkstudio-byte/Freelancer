@@ -20,9 +20,13 @@ import { createMarkers, deleteGeneratedMarkers } from '../premiere/Markers.js';
 import { framesToTimecode, secondsToFrames, formatDuration } from '../premiere/Timecode.js';
 import { buildGridFromBpm, beatsPerBar } from '../beatGrid/BeatGrid.js';
 import { computePlacements } from '../beatGrid/placement.js';
-import { analyzeWavBuffer, analyzeClipBuffers } from '../engine/timelineAnalyze.js';
+import { decodeWav } from '../audio/WaveReader.js';
+import { assembleTrackAudio } from '../engine/timelineAssemble.js';
 import { pickAudioFile } from '../premiere/FileSource.js';
 import { renderTimelineAudio, cleanup } from '../premiere/AudioExtractor.js';
+import { SettingsStore, memoryBackend } from '../settings/SettingsStore.js';
+import { Analyzer } from '../analysis/Analyzer.js';
+import { setDevMode } from '../utils/Logger.js';
 import { toBeatMarkerError } from '../utils/Errors.js';
 
 const $ = (id) => document.getElementById(id);
@@ -32,9 +36,24 @@ let currentGrid = null;
 let rangeStartSeconds = 0;
 let cancelFlag = false;
 
-// TODO(config): path to a PCM-WAV .epr preset for timeline rendering. Until the
-// user configures one (Settings), timeline Auto analysis reports it's needed.
-let PCM_WAV_PRESET = null;
+const settings = new SettingsStore(localStorageBackend());
+const analyzer = new Analyzer();
+
+/** localStorage-backed settings when available; in-memory otherwise. */
+function localStorageBackend() {
+  try {
+    // eslint-disable-next-line no-undef
+    if (typeof localStorage !== 'undefined') return localStorage;
+  } catch {
+    /* not available */
+  }
+  return memoryBackend();
+}
+
+/** Preset path comes from settings. */
+function presetPath() {
+  return settings.get('pcmWavPreset') || '';
+}
 
 function status(msg, kind = '') {
   const bar = $('statusBar');
@@ -119,6 +138,48 @@ function renderResult() {
   }
 }
 
+// ---- settings --------------------------------------------------------------
+
+function initSettings() {
+  settings.load();
+  analyzer.enabled = settings.get('cacheEnabled');
+  setDevMode(settings.get('devMode'));
+  applySettingsToUI();
+}
+
+function applySettingsToUI() {
+  $('sensitivity').value = String(settings.get('sensitivity'));
+  $('markerMode').value = settings.get('defaultMarkerMode');
+  $('meterSelect').value = settings.get('defaultMeter');
+  $('offsetMs').value = String(settings.get('firstBeatOffsetMs'));
+  $('presetPath').value = settings.get('pcmWavPreset');
+  $('cacheEnabled').checked = settings.get('cacheEnabled');
+  $('keepTemp').checked = settings.get('keepTemp');
+  $('devMode').checked = settings.get('devMode');
+  const bpm = settings.get('defaultBpm');
+  if (bpm !== 'auto') {
+    $('bpmMode').value = 'manual';
+    $('manualBpm').value = String(bpm);
+    toggleBpmMode();
+  }
+}
+
+/** Persist the current control values as the user's defaults. */
+function saveSettingsFromUI() {
+  settings.set({
+    sensitivity: Number($('sensitivity').value),
+    defaultMarkerMode: $('markerMode').value,
+    defaultMeter: $('meterSelect').value,
+    firstBeatOffsetMs: Number($('offsetMs').value || 0),
+    pcmWavPreset: $('presetPath').value.trim(),
+    cacheEnabled: $('cacheEnabled').checked,
+    keepTemp: $('keepTemp').checked,
+    devMode: $('devMode').checked,
+  });
+  analyzer.enabled = settings.get('cacheEnabled');
+  setDevMode(settings.get('devMode'));
+}
+
 /** ANALYZE / BUILD GRID dispatcher. */
 async function onAnalyze() {
   const source = document.querySelector('input[name="source"]:checked').value;
@@ -146,7 +207,7 @@ function buildManualGrid() {
 async function analyzeTimeline() {
   if (!isUxp()) return status('Open in Premiere Pro to analyze the timeline.', '');
   if (!seqInfo) return status('Open a sequence first.', 'error');
-  if (!PCM_WAV_PRESET) {
+  if (!presetPath()) {
     return status('Timeline analysis needs a PCM WAV export preset (.epr). Set one in Settings.', 'error');
   }
   const mode = $('extractMode').value === 'mix' ? 'mix' : 'perClip';
@@ -156,27 +217,34 @@ async function analyzeTimeline() {
     const rendered = await renderTimelineAudio({
       mode,
       trackIndex: Number($('trackSelect').value || 0),
-      presetPath: PCM_WAV_PRESET,
+      presetPath: presetPath(),
       onProgress: (p) => setProgress(0.05 + 0.05 * p),
       isCancelled: () => cancelFlag,
     });
     const opts = analyzeOptions();
+    let audio;
     if (rendered.mode === 'mix') {
-      currentGrid = analyzeWavBuffer(rendered.buffer, opts).grid;
+      audio = decodeWav(rendered.buffer);
       rangeStartSeconds = 0;
     } else {
-      const res = analyzeClipBuffers(rendered.clips, opts);
-      currentGrid = res.grid;
-      rangeStartSeconds = res.rangeStartSeconds;
+      const decoded = rendered.clips.map((c) => {
+        const w = decodeWav(c.buffer);
+        return { startSeconds: c.startSeconds, samples: w.samples, sampleRate: w.sampleRate };
+      });
+      const asm = assembleTrackAudio(decoded);
+      audio = { samples: asm.samples, sampleRate: asm.sampleRate };
+      rangeStartSeconds = asm.rangeStartSeconds;
     }
+    const { grid, cached } = analyzer.analyze(audio, opts);
+    currentGrid = grid;
     renderResult();
-    status(`Analyzed: ${currentGrid.bpm} BPM, ${currentGrid.beats.length} beats.`, 'ok');
+    status(`Analyzed: ${grid.bpm} BPM, ${grid.beats.length} beats${cached ? ' (cached)' : ''}.`, 'ok');
   } catch (e) {
     if (e && e.cancelled) status('Analysis cancelled.', '');
     else status(toBeatMarkerError(e).userMessage, 'error');
   } finally {
     showProgress(false);
-    if (!$('keepTemp')?.checked) await cleanup().catch(() => {});
+    if (!settings.get('keepTemp')) await cleanup().catch(() => {});
   }
 }
 
@@ -192,12 +260,13 @@ async function onChooseFile() {
       return status('MP3 decoding needs the native/WASM engine (not yet built). Use WAV for now.', 'error');
     }
     showProgress(true, 'Analyzing audio…');
-    const { grid, durationSeconds } = analyzeWavBuffer(picked.buffer, analyzeOptions());
+    const w = decodeWav(picked.buffer);
+    const { grid, cached } = analyzer.analyze({ samples: w.samples, sampleRate: w.sampleRate, durationSeconds: w.durationSeconds }, analyzeOptions());
     currentGrid = grid;
     rangeStartSeconds = 0;
-    $('fileInfo').textContent += ` · ${formatDuration(durationSeconds)}`;
+    $('fileInfo').textContent += ` · ${formatDuration(w.durationSeconds)}`;
     renderResult();
-    status(`Analyzed ${picked.name}: ${grid.bpm} BPM.`, 'ok');
+    status(`Analyzed ${picked.name}: ${grid.bpm} BPM${cached ? ' (cached)' : ''}.`, 'ok');
   } catch (e) {
     status(toBeatMarkerError(e).userMessage, 'error');
   } finally {
@@ -259,6 +328,16 @@ function wire() {
   $('chooseFile').addEventListener('click', onChooseFile);
   $('cancelBtn').addEventListener('click', onCancel);
 
+  // Settings: persist on change and apply side effects.
+  ['sensitivity', 'markerMode', 'meterSelect', 'offsetMs', 'presetPath', 'cacheEnabled', 'keepTemp', 'devMode'].forEach(
+    (id) => $(id).addEventListener('change', saveSettingsFromUI)
+  );
+  $('clearCache').addEventListener('click', () => {
+    analyzer.clear();
+    status('Analysis cache cleared.', 'ok');
+  });
+
+  initSettings();
   toggleSource();
   toggleBpmMode();
   refreshTimeline();

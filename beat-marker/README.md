@@ -116,8 +116,15 @@ later step (Windows x64 is the first target).
   (`AudioExtractor`, `VERIFY-IN-PPRO` on encoder/preset details) and feeds a pure,
   **tested** multi-clip assembler that preserves timeline positions and keeps
   **gaps silent** (no phantom beats between clips). Progress + Cancel plumbed.
-- ⏳ Next: settings (preset path, keep-temp, defaults), strong-beat UI polish,
-  and — once you build them — the native/WASM engine benchmark.
+- ✅ Krok 6/7: **Settings** (persisted locally: PCM-WAV preset path, cache
+  on/off, keep-temp, dev logging, plus defaults for sensitivity / marker mode /
+  meter / first-beat offset), **analysis cache** (content fingerprint → BeatGrid,
+  never stores audio; a repeat analysis is an instant cache hit), and a dev
+  logger toggle — all **tested** (settings merge/validation, fingerprint
+  stability, cache hit/miss + LRU).
+- ⏳ Remaining for a full timeline run in Premiere: configure a PCM-WAV `.epr`
+  preset in Settings, and confirm the `VERIFY-IN-PPRO` encoder/marker calls on a
+  live Premiere 25.x. MP3 + native/WASM speed await their build.
 
 ## Engine benchmark
 

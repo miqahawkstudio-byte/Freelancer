@@ -108,6 +108,18 @@
         <button id="setFirstBeat" class="btn">SET FIRST BEAT</button>
       </section>
 
+      <!-- SETTINGS -->
+      <section class="group">
+        <h2>SETTINGS</h2>
+        <label class="field">PCM WAV preset (.epr)
+          <input id="presetPath" class="numinput" type="text" placeholder="path to WAV export preset" />
+        </label>
+        <label class="check"><input type="checkbox" id="cacheEnabled" checked /> Cache analysis results</label>
+        <label class="check"><input type="checkbox" id="keepTemp" /> Keep temporary audio</label>
+        <label class="check"><input type="checkbox" id="devMode" /> Developer logging</label>
+        <button id="clearCache" class="btn">Clear cache</button>
+      </section>
+
       <!-- ACTIONS -->
       <section class="group actions">
         <button id="createMarkers" class="btn primary">CREATE MARKERS</button>
