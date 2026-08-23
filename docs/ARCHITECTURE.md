@@ -34,6 +34,13 @@ changelog UXP, oraz wątki Adobe Community.
    deliverable to poprawny plik **SRT**; import do Premiere próbujemy programowo,
    a gdy API zawiedzie — otwieramy/wskazujemy ścieżkę importu ręcznego.
 
+   Stan API potwierdzony w oficjalnej referencji UXP (Etap 9): **brak
+   `createCaptionTrack`** na `Sequence`/`Project`; caption API jest tylko do
+   odczytu (`getCaptionTrack`, `getCaptionTrackCount`). Istnieje natomiast
+   `Project.importFiles(...)`, więc SRT **importujemy do projektu** jako element
+   napisów, ale **umieszczenie go na ścieżce napisów sekwencji pozostaje ręczne**
+   (UXP nie pozwala utworzyć ścieżki napisów z kodu).
+
 ---
 
 ## 2. Architektura wysokiego poziomu
