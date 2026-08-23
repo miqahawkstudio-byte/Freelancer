@@ -91,7 +91,9 @@ later step (Windows x64 is the first target).
 - **V1.1:** strong beats UI, marker colors (if API confirmed), waveform, cache,
   better confidence.
 - **V2:** phrase detection, drops, transitions, energy analysis, Cut on Beat,
-  Snap to Beat.
+  Snap to Beat. Groundwork present: `beatGrid/snap.js` (pure, tested) exposes
+  nearest-beat snapping and beat-aligned cut points so the BeatGrid is ready to
+  drive clip moves/cuts; only the Premiere `move()`/razor calls remain for V2.
 
 ### Implemented so far
 
