@@ -103,8 +103,26 @@ later step (Windows x64 is the first target).
 - ✅ Krok 3: grid → timeline placement mapping + full marker create/delete
   wiring. **Manual BPM path works end-to-end today** (build grid → exact-frame
   markers) with no DSP engine required — **placement tested**.
-- ⏳ Next: DSP engine (Krok 4), audio extraction (Krok 5) to feed the same
-  create pipeline from analyzed audio.
+- ✅ Krok 4: **working pure-JS DSP engine** behind `analyzeAudio()` —
+  spectral-flux onset → autocorrelation tempo (parabolic-interpolated) →
+  phase-locked beats → meter/downbeat; pure-JS WAV decoder; drift-free BPM
+  octave correction. **Tested** against click tracks at 90/100/120/128/140/
+  160/174 BPM (mean error ~0.4 BPM, ~277× realtime). Native aubio `.uxpaddon`
+  + WASM backends are scaffolded behind the same API (`native/`), chosen by the
+  benchmark harness (`npm run bench`).
+- ⏳ Next: audio extraction (Krok 5) — feed timeline/file audio into the same
+  engine → the same marker pipeline.
+
+## Engine benchmark
+
+```bash
+npm run bench                       # JS baseline (works today)
+node bench/benchmark.mjs --engine=native   # after building native/ (Windows)
+node bench/benchmark.mjs --engine=wasm      # after building the wasm backend
+```
+
+All three backends return the identical BeatGrid, so the native-vs-WASM choice
+is a measurement, not an API change. See `native/README.md`.
 
 ### Try it now (Manual BPM, in Premiere)
 

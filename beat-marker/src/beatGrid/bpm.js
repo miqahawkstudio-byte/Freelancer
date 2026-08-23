@@ -55,11 +55,12 @@ export function correctOctave(rawBpm, opts = {}) {
   const scores = {};
   for (const c of candidates) {
     const prior = softPrior(c, preferred);
-    // Coverage (precision/recall) is the discriminator: a too-fast candidate
-    // leaves empty grid beats (low recall); a too-slow one leaves onsets between
-    // beats (low precision). This separates 64 vs 128 vs 174 where phase-only
-    // agreement cannot. Prior only nudges genuine ties.
-    const fit = hasOnsets ? gridCoverage(onsets, c).f : 0;
+    // tempoScore is drift-free (built from local inter-onset intervals + onset
+    // density), so it stays valid over long signals where an absolute grid would
+    // accumulate phase error and wrongly favor the half-tempo. It rejects the
+    // half-tempo (onsets finer than the grid) via interval consistency and the
+    // double-tempo (empty grid beats) via density. Prior only nudges ties.
+    const fit = hasOnsets ? tempoScore(onsets, c) : 0;
     scores[c] = fit * 1.0 + prior * 0.15;
   }
   let best = candidates[0];
@@ -134,6 +135,43 @@ export function gridCoverage(onsets, bpm) {
 
   const f = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
   return { precision, recall, f };
+}
+
+/**
+ * Drift-free tempo plausibility score in 0..1 for a candidate BPM against
+ * detected onset times. Uses only local structure so it does not degrade on
+ * long signals:
+ *   consistency C = fraction of inter-onset intervals that are ~an integer
+ *                   number of beat periods (rejects too-slow / half-tempo,
+ *                   whose onsets are finer than the grid -> ratio < 1)
+ *   density D     = onsets per grid beat; densityScore peaks at D=1 and falls
+ *                   for too-fast candidates whose grid has empty beats
+ * score = 0.55*C + 0.45*densityScore
+ */
+export function tempoScore(onsets, bpm) {
+  if (!Array.isArray(onsets) || onsets.length < 3) return 0;
+  const P = 60 / bpm;
+  if (!(P > 0)) return 0;
+
+  const s = [...onsets].sort((a, b) => a - b);
+  const span = s[s.length - 1] - s[0];
+  if (span <= 0) return 0;
+
+  let consistent = 0;
+  let total = 0;
+  for (let i = 1; i < s.length; i++) {
+    const ratio = (s[i] - s[i - 1]) / P;
+    const k = Math.round(ratio);
+    total++;
+    if (k >= 1 && Math.abs(ratio - k) <= 0.18) consistent++;
+  }
+  const C = total ? consistent / total : 0;
+
+  const gridBeats = span / P;
+  const D = gridBeats > 0 ? (s.length - 1) / gridBeats : 0;
+  const densityScore = D <= 1 ? D : 1 / D;
+
+  return 0.55 * C + 0.45 * densityScore;
 }
 
 function softPrior(bpm, preferred) {

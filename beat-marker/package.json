@@ -5,7 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node test/run.mjs"
+    "test": "node test/run.mjs",
+    "bench": "node bench/benchmark.mjs"
   },
   "license": "UNLICENSED"
 }
