@@ -9,6 +9,10 @@
 
 import { getSettings, setSetting, loadSettings } from "../config/settings.js";
 import { describeActiveSequence, getPPro } from "../premiere/sequence.js";
+import { runPipeline } from "../subtitles/pipeline.js";
+import { saveSrt, pickAndSaveSrt, revealFile } from "../export/writer.js";
+import { importSrtToProject } from "../premiere/captions.js";
+import { ErrorCodes } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
 
 const log = createLogger("ui");
@@ -152,7 +156,7 @@ export async function renderPanel(root) {
   const generateBtn = el("button", { class: "btn btn-primary", id: "generate", text: "GENERUJ NAPISY" });
   const cancelBtn = el("button", { class: "btn btn-danger", id: "cancel", text: "Anuluj" });
   cancelBtn.disabled = true;
-  generateBtn.disabled = true; // podłączenie pipeline: kolejne etapy
+  generateBtn.disabled = !inPremiere; // aktywny w Premiere (Etap 10)
 
   const bar = el("div", { class: "bar" });
   const progress = el("div", { class: "progress" }, [bar]);
@@ -180,7 +184,7 @@ export async function renderPanel(root) {
   const footer = el("div", { class: "muted" }, [
     document.createTextNode(
       inPremiere
-        ? "Gotowe. Podłączanie pipeline w kolejnych etapach."
+        ? "Napisy PL z audio timeline · lokalny Whisper"
         : "Uwaga: uruchomiono poza Premiere Pro (podgląd UI)."
     ),
   ]);
@@ -247,6 +251,127 @@ export async function renderPanel(root) {
 
   refreshBtn.addEventListener("click", refreshSequence);
   await refreshSequence();
+
+  // --- Pipeline: GENERUJ NAPISY / Anuluj (Etap 10) ---
+  let currentAbort = null;
+  let lastSrt = null;
+  let lastCues = null;
+  let lastSavedPath = null;
+
+  function setBusy(busy) {
+    generateBtn.disabled = busy;
+    cancelBtn.disabled = !busy;
+    refreshBtn.disabled = busy;
+    audioSelect.disabled = busy;
+    rangeSelect.disabled = busy;
+    modelSelect.disabled = busy;
+  }
+
+  function enablePostActions(on) {
+    exportSrtBtn.disabled = !on;
+    createCaptionsBtn.disabled = !on;
+    // Folder aktywny dopiero po zapisaniu pliku.
+  }
+
+  function currentFileName() {
+    const base = (seqNameValue.textContent || "napisy").replace(/[^\p{L}\p{N}_-]+/gu, "_").slice(0, 60);
+    return `${base || "napisy"}.srt`;
+  }
+
+  generateBtn.addEventListener("click", async () => {
+    const settings = getSettings();
+    if (!settings.audioPresetPath) {
+      setStatus(status, "Ustaw preset eksportu audio (.epr) w sekcji Ustawienia napisów.", "warn");
+      return;
+    }
+    setBusy(true);
+    enablePostActions(false);
+    openFolderBtn.disabled = true;
+    lastSavedPath = null;
+    setProgress(bar, 0);
+    currentAbort = new AbortController();
+
+    try {
+      const { srtContent, cues } = await runPipeline({
+        settings,
+        selection: {
+          audioTrackIndex: audioSelect.value === "" ? null : parseInt(audioSelect.value, 10),
+          range: rangeSelect.value,
+        },
+        signal: currentAbort.signal,
+        onProgress: ({ percent, status: st }) => {
+          setProgress(bar, percent);
+          setStatus(status, st);
+        },
+      });
+      lastSrt = srtContent;
+      lastCues = cues;
+      setProgress(bar, 100);
+      setStatus(status, `Gotowe: ${cues.length} napisów.`, "ok");
+      enablePostActions(true);
+    } catch (e) {
+      setProgress(bar, 0);
+      const cancelled = e && e.code === ErrorCodes.TRANSCRIPTION_CANCELLED;
+      setStatus(status, (e && e.userMessage) || "Wystąpił błąd.", cancelled ? "warn" : "error");
+      log.warn("Pipeline error", { code: e && e.code });
+    } finally {
+      setBusy(false);
+      currentAbort = null;
+    }
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    if (currentAbort) {
+      currentAbort.abort();
+      setStatus(status, "Przerywanie…", "warn");
+    }
+  });
+
+  // --- EKSPORTUJ SRT ---
+  exportSrtBtn.addEventListener("click", async () => {
+    if (!lastSrt) return;
+    const settings = getSettings();
+    try {
+      const fileName = currentFileName();
+      const res = settings.exportFolder
+        ? await saveSrt(lastSrt, { dirNative: settings.exportFolder, fileName })
+        : await pickAndSaveSrt(lastSrt, fileName);
+      if (!res) return; // anulowano dialog
+      lastSavedPath = res.path;
+      openFolderBtn.disabled = false;
+      setStatus(status, `Zapisano SRT: ${res.fileName}`, "ok");
+    } catch (e) {
+      setStatus(status, (e && e.userMessage) || "Nie udało się zapisać SRT.", "error");
+    }
+  });
+
+  // --- UTWÓRZ NAPISY W PREMIERE (best-effort) ---
+  createCaptionsBtn.addEventListener("click", async () => {
+    if (!lastSrt) return;
+    try {
+      if (!lastSavedPath) {
+        const res = await saveSrt(lastSrt, { fileName: currentFileName() });
+        lastSavedPath = res.path;
+        openFolderBtn.disabled = false;
+      }
+      const r = await importSrtToProject(lastSavedPath);
+      setStatus(status, r.note || "Zaimportowano SRT do projektu.", "ok");
+    } catch (e) {
+      // Fallback: SRT jest zapisany — kierujemy do importu ręcznego.
+      setStatus(
+        status,
+        (e && e.userMessage) || "Nie udało się utworzyć napisów. Zaimportuj SRT ręcznie (File → Import).",
+        "warn"
+      );
+    }
+  });
+
+  // --- OTWÓRZ FOLDER ---
+  openFolderBtn.addEventListener("click", async () => {
+    if (lastSavedPath) await revealFile(lastSavedPath);
+  });
+
+  void lastCues;
 
   return {
     generateBtn,

@@ -185,6 +185,60 @@ export async function describeActiveSequence() {
 }
 
 /**
+ * Izoluje jedną ścieżkę audio na czas eksportu (wycisza pozostałe), bo
+ * exportSequence renderuje cały mix sekwencji — nie pojedynczą ścieżkę.
+ * Zwraca funkcję przywracającą oryginalne stany wyciszenia.
+ *
+ * @param {any} sequence
+ * @param {number} keepIndex  indeks (getIndex) ścieżki do zachowania; null = bez zmian
+ * @returns {Promise<() => Promise<void>>} restore()
+ */
+export async function soloAudioTrack(sequence, keepIndex) {
+  if (keepIndex == null) return async () => {};
+  const count = await sequence.getAudioTrackCount();
+  const saved = [];
+  for (let i = 0; i < count; i++) {
+    let track;
+    try {
+      track = await sequence.getAudioTrack(i);
+    } catch (e) {
+      continue;
+    }
+    let idx = i;
+    try {
+      const gi = await track.getIndex();
+      if (typeof gi === "number") idx = gi;
+    } catch (e) {
+      /* zostaje i */
+    }
+    let wasMuted = false;
+    try {
+      wasMuted = await track.isMuted();
+    } catch (e) {
+      /* zakładamy false */
+    }
+    saved.push({ track, wasMuted });
+    const shouldMute = idx !== keepIndex;
+    if (shouldMute !== wasMuted) {
+      try {
+        await track.setMute(shouldMute);
+      } catch (e) {
+        log.warn("Nie udało się zmienić wyciszenia ścieżki", { idx });
+      }
+    }
+  }
+  return async () => {
+    for (const { track, wasMuted } of saved) {
+      try {
+        await track.setMute(wasMuted);
+      } catch (e) {
+        /* best-effort */
+      }
+    }
+  };
+}
+
+/**
  * Uruchamia funkcję i zwraca fallback zamiast rzucać (do zbierania metadanych).
  */
 async function safe(fn, fallback) {
