@@ -1,0 +1,10 @@
+node_modules/
+*.uxpaddon
+beat-marker-cache/
+.DS_Store
+
+# The plugin ships the bundled panel script; keep it tracked.
+# (Re-include the dist dir first — the repo-root .gitignore excludes any dist/.)
+!dist/
+dist/*
+!dist/panel.js
