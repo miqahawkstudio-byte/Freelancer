@@ -16,7 +16,10 @@ mkdirSync(resolve(root, "dist"), { recursive: true });
 const options = {
   entryPoints: [resolve(root, "src/main.js")],
   bundle: true,
-  format: "esm",
+  // UXP nie uruchamia <script type="module"> (ESM) w panelu — używamy IIFE,
+  // ładowanego zwykłym <script src>. `require('premierepro'|'uxp')` zostaje
+  // zewnętrzny (dostarcza je runtime UXP).
+  format: "iife",
   outfile: resolve(root, "dist/index.js"),
   external: ["premierepro", "uxp"],
   minify: prod,
