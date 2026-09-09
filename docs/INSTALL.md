@@ -50,6 +50,10 @@ docker-compose up --build   # backend na :8000, tryb standalone (web) na :5173
 
 ### 3a. Build
 
+> Repozytorium zawiera już **gotowy bundel** `uxp-plugin/dist/index.js`, więc
+> jeśli nie zmieniasz kodu, ten krok możesz **pominąć** i przejść do 3b.
+> Budowanie potrzebne jest tylko po modyfikacji źródeł w `src/`.
+
 ```bash
 cd uxp-plugin
 npm install

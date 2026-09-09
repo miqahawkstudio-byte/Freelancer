@@ -1,5 +1,9 @@
 node_modules/
-dist/
 build/
 *.ccx
 .DS_Store
+
+# Dołączamy gotowy bundel, aby plugin działał bez budowania (npm).
+# Ignorujemy resztę zawartości dist/ (mapy źródeł itp.).
+dist/*
+!dist/index.js
