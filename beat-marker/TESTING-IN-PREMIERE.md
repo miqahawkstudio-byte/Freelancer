@@ -8,9 +8,16 @@ spots — the UXP host calls. Work through these in order; each maps to code.
 ## 0. Load the plugin
 
 1. Install Adobe **UXP Developer Tool (UDT)** and Premiere Pro **25.x+**.
-2. UDT → *Add Plugin* → select `beat-marker/manifest.json` → *Load*.
-3. Open the panel from Premiere's **Window** menu. It should render the dark UI.
-   - If it fails to load, check `manifest.json` (`host.minVersion`, permissions).
+2. `cd beat-marker && npm install && npm run build` — generates `dist/panel.js`
+   (already committed, but rebuild after any `src/` edit).
+3. UDT → *Add Plugin* → select `beat-marker/manifest.json` → *Load*.
+4. Open the panel from Premiere's **Window** menu. It should render the dark UI
+   **and the buttons must respond** (e.g. clicking ANALYZE shows a status line).
+   - Panel renders but buttons are dead → the panel script didn't run. The panel
+     loads the bundled `dist/panel.js` (UXP doesn't reliably run ES modules);
+     make sure it exists and was rebuilt after edits.
+   - If it fails to load at all, check `manifest.json` (`host.minVersion`,
+     permissions).
 
 ## 1. Read the timeline  (`src/premiere/Sequence.js`, `Tracks.js`, `Clips.js`)
 

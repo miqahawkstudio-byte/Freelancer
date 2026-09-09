@@ -144,6 +144,7 @@
       <div id="statusBar" class="statusbar"></div>
     </div>
 
-    <script type="module" src="src/ui/panel.js"></script>
+    <!-- Bundled (esbuild IIFE) — UXP does not reliably run <script type="module">. -->
+    <script src="dist/panel.js"></script>
   </body>
 </html>

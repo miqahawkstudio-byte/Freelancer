@@ -8,13 +8,14 @@
  */
 
 import { BeatMarkerError, ErrorCode } from '../utils/Errors.js';
+import { hostRequire } from './hostRequire.js';
 
 let _ppro = null;
 
 /** True when running inside the Premiere UXP host. */
 export function isUxp() {
   // In UXP, a global `require` resolves host modules. Outside, it does not.
-  return typeof require === 'function' && safeRequire('premierepro') != null;
+  return hostRequire('premierepro') != null;
 }
 
 /**
@@ -23,7 +24,7 @@ export function isUxp() {
  */
 export function ppro() {
   if (_ppro) return _ppro;
-  const mod = safeRequire('premierepro');
+  const mod = hostRequire('premierepro');
   if (!mod) {
     throw new BeatMarkerError(
       ErrorCode.UXP_UNAVAILABLE,
@@ -43,13 +44,4 @@ export async function getActiveProject() {
     throw new BeatMarkerError(ErrorCode.NO_PROJECT, 'No project is open.');
   }
   return project;
-}
-
-function safeRequire(name) {
-  try {
-    // eslint-disable-next-line no-undef
-    return typeof require === 'function' ? require(name) : null;
-  } catch {
-    return null;
-  }
 }

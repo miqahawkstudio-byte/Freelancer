@@ -19,6 +19,7 @@
  */
 
 import { ppro } from './env.js';
+import { hostRequire } from './hostRequire.js';
 import { listClips } from './Clips.js';
 import { ticksToSeconds } from './Timecode.js';
 import { BeatMarkerError, ErrorCode, toBeatMarkerError } from '../utils/Errors.js';
@@ -27,8 +28,7 @@ import { log } from '../utils/Logger.js';
 const TEMP_DIRNAME = 'beat-marker-cache';
 
 function uxp() {
-  // eslint-disable-next-line no-undef
-  return typeof require === 'function' ? require('uxp') : null;
+  return hostRequire('uxp');
 }
 
 /** Create/return the plugin temp folder for rendered audio. */

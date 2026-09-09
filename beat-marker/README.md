@@ -66,12 +66,20 @@ beat-marker/
 
 ## Development
 
-Requires Node 18+ for tests (no npm dependencies).
+Requires Node 18+.
 
 ```bash
 cd beat-marker
-npm test          # runs the pure-logic unit suite (timecode, grid, modes, bpm, tags)
+npm install       # dev dependency: esbuild (for the panel bundle)
+npm test          # pure-logic unit suite (timecode, grid, modes, bpm, tags, engine)
+npm run build     # bundle src/ui/panel.js -> dist/panel.js (IIFE classic script)
 ```
+
+**Why a bundle:** UXP does not reliably execute `<script type="module">`, so the
+panel loads a single bundled classic script (`dist/panel.js`, committed). After
+editing anything under `src/`, run `npm run build` to regenerate it, or the panel
+in Premiere will keep running the old code. The source stays modular and tested;
+esbuild just concatenates it for the host.
 
 ### Loading in Premiere Pro (Windows-first)
 

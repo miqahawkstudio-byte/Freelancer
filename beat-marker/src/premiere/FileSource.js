@@ -8,11 +8,11 @@
  */
 
 import { BeatMarkerError, ErrorCode } from '../utils/Errors.js';
+import { hostRequire } from './hostRequire.js';
 import { log } from '../utils/Logger.js';
 
 function uxpFs() {
-  // eslint-disable-next-line no-undef
-  const uxp = typeof require === 'function' ? require('uxp') : null;
+  const uxp = hostRequire('uxp');
   const fs = uxp?.storage?.localFileSystem;
   if (!fs) throw new BeatMarkerError(ErrorCode.UXP_UNAVAILABLE);
   return { fs, formats: uxp.storage.formats };

@@ -6,7 +6,11 @@
   "type": "module",
   "scripts": {
     "test": "node test/run.mjs",
-    "bench": "node bench/benchmark.mjs"
+    "bench": "node bench/benchmark.mjs",
+    "build": "esbuild src/ui/panel.js --bundle --format=iife --platform=browser --outfile=dist/panel.js --legal-comments=none"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
 }
