@@ -3,7 +3,7 @@
  * Użycie: node scripts/build.mjs [--prod] [--watch]
  */
 import { build, context } from "esbuild";
-import { mkdirSync, copyFileSync } from "fs";
+import { mkdirSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
@@ -22,20 +22,15 @@ const options = {
   minify: prod,
   sourcemap: prod ? false : "inline",
   target: ["chrome98"], // UXP (Chromium)
+  loader: { ".css": "text" }, // CSS wbudowany w bundel i wstrzykiwany w main.js
   logLevel: "info",
 };
-
-function copyCss() {
-  copyFileSync(resolve(root, "src/ui/styles.css"), resolve(root, "dist/styles.css"));
-}
 
 if (watch) {
   const ctx = await context(options);
   await ctx.watch();
-  copyCss();
-  console.log("watch: obserwuję zmiany… (CSS skopiowany)");
+  console.log("watch: obserwuję zmiany…");
 } else {
   await build(options);
-  copyCss();
-  console.log(`build ${prod ? "produkcyjny" : "developerski"} gotowy → dist/`);
+  console.log(`build ${prod ? "produkcyjny" : "developerski"} gotowy → dist/index.js`);
 }

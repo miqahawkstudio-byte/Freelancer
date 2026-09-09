@@ -9,13 +9,28 @@
 import { loadSettings, getSettings } from "./config/settings.js";
 import { configureLogger, createLogger } from "./utils/logger.js";
 import { renderPanel } from "./ui/panel.js";
+// CSS jest wbudowany w bundel (esbuild loader: text) i wstrzykiwany jako <style>,
+// dzięki czemu nie zależymy od osobnego pliku dist/styles.css.
+import styles from "./ui/styles.css";
 
 const log = createLogger("main");
+
+function injectStyles() {
+  try {
+    const style = document.createElement("style");
+    style.textContent = styles;
+    document.head.appendChild(style);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error("Nie udało się wstrzyknąć stylów", e);
+  }
+}
 
 async function boot() {
   const root = document.getElementById("app");
   if (!root) return;
 
+  injectStyles();
   await loadSettings();
   configureLogger({ devLogging: getSettings().devLogging });
   log.info("Polish Subtitle AI — start panelu");
